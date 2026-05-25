@@ -190,10 +190,11 @@ def fetch_options(date_str):
 
 # ────────────────────────────────────────────
 # 3. 抓支撐壓力（各履約價未平倉）
-# [0]TXO [1]週別 [2]到期日 [3]履約價 [4]Call/Put [11]未平倉口數
+# 資料來源：https://www.taifex.com.tw/cht/3/optContractsDate
+# [3]履約價 [4]Call/Put [5]未平倉口數
 # ────────────────────────────────────────────
 def fetch_support_resistance(date_str):
-    url = "https://www.taifex.com.tw/cht/3/optDailyMarketReport"
+    url = "https://www.taifex.com.tw/cht/3/optContractsDate"
     result = {}
 
     try:
@@ -203,34 +204,44 @@ def fetch_support_resistance(date_str):
 
         resp = s.post(url, timeout=20, headers=get_headers(url),
                       data={"queryStartDate":date_str, "queryEndDate":date_str,
-                            "commodityId":"TXO", "grouping":"week"})
+                            "commodityId":"TXO"})
         resp.encoding = "utf-8"
         soup = BeautifulSoup(resp.text, "html.parser")
 
+        # 尋找包含履約價資料的表格
+        target_table = None
         for t in soup.find_all("table"):
-            rows = t.find_all("tr")
-            if len(rows) < 10:
-                continue
-            for row in rows:
-                tds = row.find_all("td")
-                texts = [td.get_text(strip=True) for td in tds]
-                if len(texts) < 12 or texts[0] != "TXO":
-                    continue
-                try:
-                    strike  = int(texts[3].replace(",",""))
-                    cp_type = texts[4]
-                    oi_str  = texts[11].replace(",","").replace("-","0").strip()
-                    oi      = int(oi_str) if oi_str.isdigit() else 0
-                except:
-                    continue
+            if "履約價" in t.get_text():
+                target_table = t
+                break
 
-                if strike not in result:
-                    result[strike] = {"call_oi":0, "put_oi":0}
-                if cp_type == "Call":
-                    result[strike]["call_oi"] += oi
-                elif cp_type == "Put":
-                    result[strike]["put_oi"] += oi
-            break
+        if not target_table:
+            print("  ⚠️  找不到支撐壓力表格")
+            return []
+
+        for row in target_table.find_all("tr"):
+            tds = row.find_all("td")
+            texts = [td.get_text(strip=True) for td in tds]
+            
+            # 根據實際表格結構，資料列通常有8個欄位以上，且第1欄為履約價(數字)
+            if len(texts) < 8:
+                continue
+                
+            try:
+                strike  = int(texts[3].replace(",","").replace("－","-").strip())
+                cp_type = texts[4]  # Call 或 Put
+                oi_str  = texts[5].replace(",","").replace("-","0").strip()
+                oi      = int(oi_str) if oi_str.isdigit() else 0
+            except (ValueError, IndexError):
+                continue
+
+            if strike not in result:
+                result[strike] = {"call_oi":0, "put_oi":0}
+                
+            if cp_type == "Call":
+                result[strike]["call_oi"] += oi
+            elif cp_type == "Put":
+                result[strike]["put_oi"] += oi
 
         sr_list = [{"履約價":k, "call_oi":v["call_oi"], "put_oi":v["put_oi"]}
                    for k, v in sorted(result.items())
@@ -242,7 +253,6 @@ def fetch_support_resistance(date_str):
     except Exception as e:
         print(f"  ❌ 支撐壓力失敗：{e}")
         return []
-
 # ────────────────────────────────────────────
 # 4. GEX 計算（簡化版）
 # ────────────────────────────────────────────
