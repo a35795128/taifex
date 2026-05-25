@@ -26,4 +26,4 @@ jobs:
       - name: 執行爬蟲
         env:
           GOOGLE_SHEETS_CREDENTIALS: ${{ secrets.GOOGLE_SHEETS_CREDENTIALS }}
-        run: python "台指期籌碼自動抓取系統_v6.py"
+        run: python "台指期籌碼自動抓取系統.py"
