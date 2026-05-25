@@ -189,29 +189,23 @@ def fetch_options(date_str):
     return result
 
 # ────────────────────────────────────────────
-# 3. 抓支撐壓力（各履約價未平倉）
-# 資料來源：https://www.taifex.com.tw/cht/3/optContractsDate
-# [3]履約價 [4]Call/Put [5]未平倉口數
+# 3. 抓支撐壓力（各履約價未平倉）- 月選
+# 資料來源：https://histock.tw/stock/option.aspx?m=month
 # ────────────────────────────────────────────
 def fetch_support_resistance(date_str):
-    url = "https://www.taifex.com.tw/cht/3/optContractsDate"
+    url = "https://histock.tw/stock/option.aspx?m=month"
     result = {}
 
     try:
         s = requests.Session()
-        s.get(url, headers=get_headers(url), timeout=15)
-        time.sleep(0.5)
-
-        resp = s.post(url, timeout=20, headers=get_headers(url),
-                      data={"queryStartDate":date_str, "queryEndDate":date_str,
-                            "commodityId":"TXO"})
+        resp = s.get(url, headers=get_headers("https://histock.tw/"), timeout=20)
         resp.encoding = "utf-8"
         soup = BeautifulSoup(resp.text, "html.parser")
 
-        # 尋找包含履約價資料的表格
+        # 尋找表格
         target_table = None
         for t in soup.find_all("table"):
-            if "履約價" in t.get_text():
+            if "履約價" in t.get_text() and "未平倉" in t.get_text():
                 target_table = t
                 break
 
@@ -223,25 +217,17 @@ def fetch_support_resistance(date_str):
             tds = row.find_all("td")
             texts = [td.get_text(strip=True) for td in tds]
             
-            # 根據實際表格結構，資料列通常有8個欄位以上，且第1欄為履約價(數字)
-            if len(texts) < 8:
+            if len(texts) < 10:
                 continue
                 
             try:
-                strike  = int(texts[3].replace(",","").replace("－","-").strip())
-                cp_type = texts[4]  # Call 或 Put
-                oi_str  = texts[5].replace(",","").replace("-","0").strip()
-                oi      = int(oi_str) if oi_str.isdigit() else 0
+                strike  = int(texts[7].replace(",", "").strip())
+                call_oi = safe_int(texts[6])
+                put_oi  = safe_int(texts[9])
             except (ValueError, IndexError):
                 continue
 
-            if strike not in result:
-                result[strike] = {"call_oi":0, "put_oi":0}
-                
-            if cp_type == "Call":
-                result[strike]["call_oi"] += oi
-            elif cp_type == "Put":
-                result[strike]["put_oi"] += oi
+            result[strike] = {"call_oi": call_oi, "put_oi": put_oi}
 
         sr_list = [{"履約價":k, "call_oi":v["call_oi"], "put_oi":v["put_oi"]}
                    for k, v in sorted(result.items())
