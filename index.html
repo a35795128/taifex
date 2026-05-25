@@ -10,78 +10,63 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
   :root {
-    --bg: #0d1117;
-    --bg2: #161b22;
-    --bg3: #21262d;
-    --text: #f0f0f0;
-    --text2: #8b949e;
-    --border: #30363d;
-    --red: #f85149;
-    --green: #3fb950;
-    --blue: #58a6ff;
-    --purple: #a371f7;
-    --amber: #d2991d;
+    --bg: #0d1117; --bg2: #161b22; --bg3: #21262d;
+    --text: #f0f0f0; --text2: #8b949e; --border: #30363d;
+    --red: #f85149; --green: #3fb950; --blue: #58a6ff; --purple: #a371f7; --amber: #d2991d;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; padding-bottom: 20px; }
+  .header { padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+  .header h1 { font-size: 17px; font-weight: 600; }
+  .header-sub { font-size: 10px; color: var(--text2); }
+  .refresh-btn { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 7px 12px; cursor: pointer; color: var(--text); font-size: 12px; }
 
-  .header { padding: 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
-  .header h1 { font-size: 18px; font-weight: 600; }
-  .header-sub { font-size: 10px; color: var(--text2); margin-top: 2px; }
-  .refresh-btn { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; cursor: pointer; color: var(--text); font-size: 13px; }
+  .tabs { display: flex; gap: 3px; padding: 10px 12px; overflow-x: auto; border-bottom: 1px solid var(--border); }
+  .tab { flex-shrink: 0; padding: 6px 12px; font-size: 11px; border: 1px solid var(--border); border-radius: 18px; cursor: pointer; background: transparent; color: var(--text2); }
+  .tab.active { background: var(--blue); color: #fff; border-color: var(--blue); }
 
-  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px; }
+  .section { display: none; padding: 12px; }
+  .section.active { display: block; }
+
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
   .card.full { grid-column: 1 / -1; }
-  .card h3 { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
-  .card .big { font-size: 28px; font-weight: 700; }
-  .card .sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
-  .red { color: var(--red); }
-  .green { color: var(--green); }
-  .blue { color: var(--blue); }
-  .purple { color: var(--purple); }
+  .card h3 { font-size: 10px; color: var(--text2); letter-spacing: 1px; margin-bottom: 4px; }
+  .card .big { font-size: 26px; font-weight: 700; }
+  .card .sub { font-size: 10px; color: var(--text2); margin-top: 2px; }
+  .red { color: var(--red); } .green { color: var(--green); } .blue { color: var(--blue); } .purple { color: var(--purple); }
 
-  .trend-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
-  .trend-row:last-child { border-bottom: none; }
+  .trend-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 11px; }
   .trend-label { color: var(--text2); }
   .trend-val { font-weight: 600; }
 
-  .tabs { display: flex; gap: 4px; padding: 0 12px 10px; overflow-x: auto; }
-  .tab { flex-shrink: 0; padding: 7px 14px; font-size: 11px; border: 1px solid var(--border); border-radius: 20px; cursor: pointer; background: transparent; color: var(--text2); }
-  .tab.active { background: var(--blue); color: #fff; border-color: var(--blue); }
-
-  .section { display: none; padding: 0 12px; }
-  .section.active { display: block; }
-
-  .notice { font-size: 10px; color: var(--text2); padding: 8px 10px; background: var(--bg2); border-radius: 8px; margin-bottom: 10px; }
+  .notice { font-size: 10px; color: var(--text2); padding: 6px 10px; background: var(--bg2); border-radius: 8px; margin-bottom: 10px; }
 
   table { width: 100%; font-size: 10px; border-collapse: collapse; }
-  th { padding: 5px 4px; color: var(--text2); font-weight: 400; border-bottom: 1px solid var(--border); text-align: center; font-size: 9px; white-space: nowrap; }
-  td { padding: 5px 4px; border-bottom: 1px solid var(--border); text-align: center; white-space: nowrap; }
-  .pos { color: var(--red); }
-  .neg { color: var(--green); }
+  th { padding: 4px 3px; color: var(--text2); font-weight: 400; border-bottom: 1px solid var(--border); text-align: center; font-size: 9px; }
+  td { padding: 4px 3px; border-bottom: 1px solid var(--border); text-align: center; }
+  .pos { color: var(--red); } .neg { color: var(--green); }
 
-  .chart-wrap { margin-bottom: 16px; }
+  .chart-wrap { margin-bottom: 14px; }
   .chart-title { font-size: 11px; font-weight: 500; margin-bottom: 4px; }
-  .legend { display: flex; flex-wrap: wrap; gap: 8px; font-size: 9px; color: var(--text2); margin-bottom: 4px; }
-  .ld { width: 10px; height: 2px; border-radius: 1px; display: inline-block; }
-
-  .sr-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 11px; }
-  .sr-strike { font-weight: 600; min-width: 55px; }
-  .sr-bar-wrap { flex: 1; margin: 0 8px; }
-  .sr-bar-bg { height: 6px; background: var(--bg3); border-radius: 3px; display: flex; overflow: hidden; }
-  .sr-bar-c { background: var(--red); height: 100%; }
-  .sr-bar-p { background: var(--green); height: 100%; }
-  .sr-num { font-size: 10px; color: var(--text2); min-width: 35px; text-align: right; }
-  .bdg { font-size: 8px; padding: 1px 5px; border-radius: 6px; font-weight: 500; }
-  .bdg-zg { background: rgba(163,113,247,0.2); color: var(--purple); }
-  .bdg-big { background: rgba(210,153,29,0.2); color: var(--amber); }
-
-  .sub-tabs { display: flex; gap: 4px; margin-bottom: 10px; }
-  .sub-tab { padding: 4px 10px; font-size: 10px; border: 1px solid var(--border); border-radius: 14px; cursor: pointer; background: transparent; color: var(--text2); }
+  .sub-tabs { display: flex; gap: 4px; margin-bottom: 8px; }
+  .sub-tab { padding: 4px 8px; font-size: 10px; border: 1px solid var(--border); border-radius: 12px; cursor: pointer; background: transparent; color: var(--text2); }
   .sub-tab.active { background: var(--bg3); color: var(--text); }
   .sub-section { display: none; }
   .sub-section.active { display: block; }
+
+  /* ===== 支撐壓力左右對稱 ===== */
+  .sr-bilateral { max-width: 100%; overflow-x: auto; }
+  .sr-row-b { display: flex; align-items: center; height: 28px; font-size: 10px; }
+  .sr-row-b.zg { background: rgba(163,113,247,0.1); border-radius: 4px; }
+  .sr-left { flex: 1; display: flex; justify-content: flex-end; align-items: center; padding-right: 6px; }
+  .sr-right { flex: 1; display: flex; align-items: center; padding-left: 6px; }
+  .sr-bar-c { background: var(--red); height: 14px; border-radius: 2px 0 0 2px; margin-right: 4px; }
+  .sr-bar-p { background: var(--green); height: 14px; border-radius: 0 2px 2px 0; margin-left: 4px; }
+  .sr-mid { min-width: 55px; text-align: center; font-weight: 700; font-size: 11px; padding: 0 4px; }
+  .bdg { font-size: 7px; padding: 1px 4px; border-radius: 4px; margin-left: 2px; }
+  .bdg-zg { background: rgba(163,113,247,0.2); color: var(--purple); }
+  .bdg-big { background: rgba(210,153,29,0.2); color: var(--amber); }
 </style>
 </head>
 <body>
@@ -94,41 +79,7 @@
   <button class="refresh-btn" onclick="loadData()">🔄 更新</button>
 </div>
 
-<!-- 首頁摘要 -->
-<div id="home" class="section active">
-  <div class="summary-grid">
-    <div class="card">
-      <h3>🔴 最大壓力</h3>
-      <div class="big red" id="homeResist">-</div>
-      <div class="sub" id="homeResistOI"></div>
-    </div>
-    <div class="card">
-      <h3>🟢 最大支撐</h3>
-      <div class="big green" id="homeSupport">-</div>
-      <div class="sub" id="homeSupportOI"></div>
-    </div>
-    <div class="card">
-      <h3>⚡ Zero Gamma</h3>
-      <div class="big purple" id="homeZG">-</div>
-      <div class="sub">多空分界線</div>
-    </div>
-    <div class="card">
-      <h3>📈 台指目前</h3>
-      <div class="big blue" id="homeTidx">-</div>
-      <div class="sub" id="homePos"></div>
-    </div>
-    <div class="card full">
-      <h3>📋 法人籌碼快照（今日增減）</h3>
-      <div id="homeChips"></div>
-    </div>
-    <div class="card full">
-      <h3>📍 關鍵價位速覽（月選 Top 5）</h3>
-      <div id="homeSR"></div>
-    </div>
-  </div>
-</div>
-
-<!-- 頁籤 -->
+<!-- 頁籤在上面 -->
 <div class="tabs">
   <button class="tab active" onclick="switchTab('home')">首頁</button>
   <button class="tab" onclick="switchTab('foreign')">外資</button>
@@ -139,47 +90,68 @@
   <button class="tab" onclick="switchTab('srweek')">週選壓力</button>
 </div>
 
-<div class="content">
-  <div id="foreign" class="section">
-    <div class="notice">外資期貨+選擇權每日增減（紅=多增 綠=空增）</div>
-    <div style="overflow-x:auto"><table>
-      <thead><tr><th>日期</th><th>大台多</th><th>大台空</th><th>小台多</th><th>小台空</th><th>微台多</th><th>微台空</th><th>SC</th><th>BC</th><th>SP</th><th>BP</th></tr></thead>
-      <tbody id="foreignTbody"></tbody>
-    </table></div>
+<!-- 首頁 -->
+<div id="home" class="section active">
+  <div class="summary-grid">
+    <div class="card"><h3>🔴 最大壓力</h3><div class="big red" id="homeResist">-</div><div class="sub" id="homeResistOI"></div></div>
+    <div class="card"><h3>🟢 最大支撐</h3><div class="big green" id="homeSupport">-</div><div class="sub" id="homeSupportOI"></div></div>
+    <div class="card"><h3>⚡ Zero Gamma</h3><div class="big purple" id="homeZG">-</div><div class="sub">多空分界線</div></div>
+    <div class="card"><h3>📈 台指參考</h3><div class="big blue" id="homeTidx">-</div><div class="sub" id="homePos"></div></div>
+    <div class="card full"><h3>📋 法人籌碼快照（今日增減）</h3><div id="homeChips"></div></div>
+    <div class="card full"><h3>📍 關鍵價位速覽</h3><div id="homeSR"></div></div>
   </div>
-  <div id="dealer" class="section">
-    <div class="notice">自營商期貨+選擇權每日增減</div>
-    <div style="overflow-x:auto"><table>
-      <thead><tr><th>日期</th><th>大台多</th><th>大台空</th><th>小台多</th><th>小台空</th><th>微台多</th><th>微台空</th><th>SC</th><th>BC</th><th>SP</th><th>BP</th></tr></thead>
-      <tbody id="dealerTbody"></tbody>
-    </table></div>
+</div>
+
+<!-- 外資 -->
+<div id="foreign" class="section">
+  <div class="notice">外資期貨+選擇權每日增減（紅=多增 綠=空增）</div>
+  <div style="overflow-x:auto"><table>
+    <thead><tr><th>日期</th><th>大台多</th><th>大台空</th><th>小台多</th><th>小台空</th><th>微台多</th><th>微台空</th><th>SC</th><th>BC</th><th>SP</th><th>BP</th></tr></thead>
+    <tbody id="foreignTbody"></tbody>
+  </table></div>
+</div>
+
+<!-- 自營 -->
+<div id="dealer" class="section">
+  <div class="notice">自營商期貨+選擇權每日增減</div>
+  <div style="overflow-x:auto"><table>
+    <thead><tr><th>日期</th><th>大台多</th><th>大台空</th><th>小台多</th><th>小台空</th><th>微台多</th><th>微台空</th><th>SC</th><th>BC</th><th>SP</th><th>BP</th></tr></thead>
+    <tbody id="dealerTbody"></tbody>
+  </table></div>
+</div>
+
+<!-- 期貨圖 -->
+<div id="futchart" class="section">
+  <div class="sub-tabs">
+    <button class="sub-tab active" onclick="switchSub('futchart','fc-big')">大台</button>
+    <button class="sub-tab" onclick="switchSub('futchart','fc-small')">小台</button>
+    <button class="sub-tab" onclick="switchSub('futchart','fc-micro')">微台</button>
   </div>
-  <div id="futchart" class="section">
-    <div class="sub-tabs">
-      <button class="sub-tab active" onclick="switchSub('futchart','fc-big')">大台</button>
-      <button class="sub-tab" onclick="switchSub('futchart','fc-small')">小台</button>
-      <button class="sub-tab" onclick="switchSub('futchart','fc-micro')">微台</button>
-    </div>
-    <div id="fc-big" class="sub-section active"><div class="chart-title">大台多空增減</div><div style="height:200px"><canvas id="cBig"></canvas></div></div>
-    <div id="fc-small" class="sub-section"><div class="chart-title">小台多空增減</div><div style="height:200px"><canvas id="cSmall"></canvas></div></div>
-    <div id="fc-micro" class="sub-section"><div class="chart-title">微台多空增減</div><div style="height:200px"><canvas id="cMicro"></canvas></div></div>
+  <div id="fc-big" class="sub-section active"><div class="chart-title">大台多空增減</div><div style="height:200px"><canvas id="cBig"></canvas></div></div>
+  <div id="fc-small" class="sub-section"><div class="chart-title">小台多空增減</div><div style="height:200px"><canvas id="cSmall"></canvas></div></div>
+  <div id="fc-micro" class="sub-section"><div class="chart-title">微台多空增減</div><div style="height:200px"><canvas id="cMicro"></canvas></div></div>
+</div>
+
+<!-- 選擇權圖 -->
+<div id="optchart" class="section">
+  <div class="sub-tabs">
+    <button class="sub-tab active" onclick="switchSub('optchart','oc-foreign')">外資</button>
+    <button class="sub-tab" onclick="switchSub('optchart','oc-dealer')">自營</button>
   </div>
-  <div id="optchart" class="section">
-    <div class="sub-tabs">
-      <button class="sub-tab active" onclick="switchSub('optchart','oc-foreign')">外資</button>
-      <button class="sub-tab" onclick="switchSub('optchart','oc-dealer')">自營</button>
-    </div>
-    <div id="oc-foreign" class="sub-section active"><div class="chart-title">外資選擇權 BC SC SP BP</div><div style="height:200px"><canvas id="cOptF"></canvas></div></div>
-    <div id="oc-dealer" class="sub-section"><div class="chart-title">自營選擇權 BC SC SP BP</div><div style="height:200px"><canvas id="cOptD"></canvas></div></div>
-  </div>
-  <div id="sr" class="section">
-    <div class="notice">📅 月選 | 紅=壓力(Call) 綠=支撐(Put) 紫=Zero Gamma</div>
-    <div id="srList"></div>
-  </div>
-  <div id="srweek" class="section">
-    <div class="notice">📅 週選 | 適合短線當沖參考</div>
-    <div id="srWeekList"></div>
-  </div>
+  <div id="oc-foreign" class="sub-section active"><div class="chart-title">外資選擇權</div><div style="height:200px"><canvas id="cOptF"></canvas></div></div>
+  <div id="oc-dealer" class="sub-section"><div class="chart-title">自營選擇權</div><div style="height:200px"><canvas id="cOptD"></canvas></div></div>
+</div>
+
+<!-- 月選支撐壓力 -->
+<div id="sr" class="section">
+  <div class="notice">📅 月選｜紅(Call)=壓力 ← → 綠(Put)=支撐｜紫底=Zero Gamma</div>
+  <div class="sr-bilateral" id="srList"></div>
+</div>
+
+<!-- 週選支撐壓力 -->
+<div id="srweek" class="section">
+  <div class="notice">📅 週選｜適合短線當沖參考</div>
+  <div class="sr-bilateral" id="srWeekList"></div>
 </div>
 
 <script>
@@ -210,79 +182,56 @@ async function loadData() {
   DATA.dealer  = dRows.filter(r=>r['日期']&&String(r['日期']).match(/\d/));
   DATA.sr      = srRows.filter(r=>String(r['履約價']||'').match(/^\d{4,6}$/));
   DATA.srWeek  = srWeekRows.filter(r=>String(r['履約價']||'').match(/^\d{4,6}$/));
-
-  buildHome();
-  buildTable('foreignTbody', DATA.foreign);
-  buildTable('dealerTbody', DATA.dealer);
-  buildSRList('srList', DATA.sr);
-  buildSRList('srWeekList', DATA.srWeek);
+  buildHome(); buildTable('foreignTbody', DATA.foreign); buildTable('dealerTbody', DATA.dealer);
+  buildBilateral('srList', DATA.sr); buildBilateral('srWeekList', DATA.srWeek);
   buildCharts();
   document.getElementById('statusText').textContent = '✅ 已更新';
 }
 
-// ========== 首頁摘要 ==========
 function buildHome() {
-  const sr = DATA.sr;
-  if (!sr.length) return;
-
+  const sr = DATA.sr; if(!sr.length) return;
   const sorted = [...sr].sort((a,b)=>safeNum(b['履約價'])-safeNum(a['履約價']));
   let topC = sorted.reduce((a,b)=>safeNum(a['Call未平倉'])>safeNum(b['Call未平倉'])?a:b);
   let topP = sorted.reduce((a,b)=>safeNum(a['Put未平倉'])>safeNum(b['Put未平倉'])?a:b);
   let zg = sorted.find(r=>String(r['Zero Gamma']||'').includes('分界'));
-  let bigs = sorted.filter(r=>String(r['大資金']||'').includes('大資金'));
-
   document.getElementById('homeResist').textContent = safeNum(topC['履約價']).toLocaleString();
   document.getElementById('homeResistOI').textContent = `Call ${Math.round(safeNum(topC['Call未平倉'])/1000)}K 口`;
   document.getElementById('homeSupport').textContent = safeNum(topP['履約價']).toLocaleString();
   document.getElementById('homeSupportOI').textContent = `Put ${Math.round(safeNum(topP['Put未平倉'])/1000)}K 口`;
-  
   const zgStrike = zg ? safeNum(zg['履約價']) : null;
   document.getElementById('homeZG').textContent = zgStrike ? zgStrike.toLocaleString() : '-';
-  
-  // 台指目前點位（從履約價範圍推估）
   const strikes = sorted.map(r=>safeNum(r['履約價']));
   const mid = Math.round((Math.max(...strikes) + Math.min(...strikes)) / 2);
   document.getElementById('homeTidx').textContent = '~' + mid.toLocaleString();
   document.getElementById('homePos').textContent = zgStrike ? (mid > zgStrike ? '🟢 偏多區' : '🔴 偏空區') : '';
 
-  // 法人籌碼快照
-  const f = DATA.foreign[0] || {};
-  const d = DATA.dealer[0] || {};
+  const f = DATA.foreign[0] || {}; const d = DATA.dealer[0] || {};
   const keys = ['大台多','大台空','小台多','小台空','SC','BC','SP','BP'];
   let chipHTML = '<div class="trend-row"><span class="trend-label">外資</span></div>';
-  keys.forEach(k => { const v = safeNum(f[k]); if(v!==0) chipHTML += `<div class="trend-row"><span class="trend-label">${k}</span><span class="trend-val ${cls(v)}">${fmt(v)}</span></div>`; });
-  chipHTML += '<div class="trend-row" style="margin-top:4px"><span class="trend-label">自營</span></div>';
-  keys.forEach(k => { const v = safeNum(d[k]); if(v!==0) chipHTML += `<div class="trend-row"><span class="trend-label">${k}</span><span class="trend-val ${cls(v)}">${fmt(v)}</span></div>`; });
-  document.getElementById('homeChips').innerHTML = chipHTML || '尚無資料';
+  keys.forEach(k=>{ const v=safeNum(f[k]); if(v!==0) chipHTML+=`<div class="trend-row"><span class="trend-label">${k}</span><span class="trend-val ${cls(v)}">${fmt(v)}</span></div>`; });
+  chipHTML+='<div class="trend-row" style="margin-top:4px"><span class="trend-label">自營</span></div>';
+  keys.forEach(k=>{ const v=safeNum(d[k]); if(v!==0) chipHTML+=`<div class="trend-row"><span class="trend-label">${k}</span><span class="trend-val ${cls(v)}">${fmt(v)}</span></div>`; });
+  document.getElementById('homeChips').innerHTML = chipHTML||'尚無資料';
 
-  // 關鍵價位速覽
-  const top5 = sorted.filter(r=>{
-    const c = safeNum(r['Call未平倉']); const p = safeNum(r['Put未平倉']);
-    return c>0 || p>0;
-  }).slice(0, 8);
-  const maxV = Math.max(...top5.map(r=>safeNum(r['Call未平倉'])+safeNum(r['Put未平倉'])), 1);
+  const top8 = sorted.filter(r=>safeNum(r['Call未平倉'])+safeNum(r['Put未平倉'])>0).slice(0,8);
+  const maxV = Math.max(...top8.map(r=>safeNum(r['Call未平倉'])+safeNum(r['Put未平倉'])),1);
   let srHTML = '';
-  top5.forEach(r=>{
-    const strike = safeNum(r['履約價']);
-    const c = safeNum(r['Call未平倉']); const p = safeNum(r['Put未平倉']);
-    const isZG = String(r['Zero Gamma']||'').includes('分界');
-    const pctC = Math.round(c/maxV*100); const pctP = Math.round(p/maxV*100);
-    srHTML += `<div class="sr-row">
-      <span class="sr-strike">${strike.toLocaleString()}</span>
-      <span class="sr-bar-wrap"><div class="sr-bar-bg"><div class="sr-bar-c" style="width:${pctC}%"></div><div class="sr-bar-p" style="width:${pctP}%"></div></div></span>
-      <span class="sr-num">C:${Math.round(c/1000)}K P:${Math.round(p/1000)}K</span>
-      ${isZG?'<span class="bdg bdg-zg">ZG</span>':''}
+  top8.forEach(r=>{
+    const strike=safeNum(r['履約價']), c=safeNum(r['Call未平倉']), p=safeNum(r['Put未平倉']);
+    const isZG=String(r['Zero Gamma']||'').includes('分界');
+    srHTML+=`<div class="sr-row-b ${isZG?'zg':''}">
+      <div class="sr-left"><div class="sr-bar-c" style="width:${Math.round(c/maxV*120)}px"></div><span style="font-size:9px;color:var(--red)">${Math.round(c/1000)}K</span></div>
+      <div class="sr-mid">${strike.toLocaleString()}${isZG?'<span class="bdg bdg-zg">ZG</span>':''}</div>
+      <div class="sr-right"><span style="font-size:9px;color:var(--green)">${Math.round(p/1000)}K</span><div class="sr-bar-p" style="width:${Math.round(p/maxV*120)}px"></div></div>
     </div>`;
   });
-  document.getElementById('homeSR').innerHTML = srHTML || '尚無資料';
+  document.getElementById('homeSR').innerHTML = srHTML||'尚無資料';
 }
 
-// ========== 表格 ==========
 function buildTable(tbodyId, rows) {
-  const tb = document.getElementById(tbodyId);
-  tb.innerHTML = '';
+  const tb=document.getElementById(tbodyId); tb.innerHTML='';
   if(!rows.length){ tb.innerHTML='<tr><td colspan="11" style="padding:20px;color:#888">尚無資料</td></tr>'; return; }
-  const keys = ['大台多','大台空','小台多','小台空','微台多','微台空','SC','BC','SP','BP'];
+  const keys=['大台多','大台空','小台多','小台空','微台多','微台空','SC','BC','SP','BP'];
   [...rows].reverse().slice(0,30).forEach(r=>{
     const tr=document.createElement('tr');
     tr.innerHTML=`<td>${String(r['日期']||'').split(' ')[0].replace(/\d{4}\//,'')}</td>`+keys.map(k=>{const v=safeNum(r[k]);return`<td class="${cls(v)}">${fmt(v)}</td>`;}).join('');
@@ -290,41 +239,35 @@ function buildTable(tbodyId, rows) {
   });
 }
 
-// ========== 支撐壓力列表 ==========
-function buildSRList(divId, dataRows) {
-  const div = document.getElementById(divId);
+// ===== 左右對稱支撐壓力 =====
+function buildBilateral(divId, dataRows) {
+  const div=document.getElementById(divId);
   if(!dataRows.length){ div.innerHTML='<div style="padding:20px;color:#888;text-align:center">尚無資料</div>'; return; }
-  const sorted = [...dataRows].sort((a,b)=>safeNum(b['履約價'])-safeNum(a['履約價']));
-  const maxV = Math.max(...sorted.map(r=>safeNum(r['Call未平倉'])+safeNum(r['Put未平倉'])),1);
-  let html = '';
+  const sorted=[...dataRows].sort((a,b)=>safeNum(b['履約價'])-safeNum(a['履約價']));
+  const maxV=Math.max(...sorted.map(r=>safeNum(r['Call未平倉'])+safeNum(r['Put未平倉'])),1);
+  let html='';
   sorted.forEach(r=>{
-    const strike = safeNum(r['履約價']); const c = safeNum(r['Call未平倉']); const p = safeNum(r['Put未平倉']);
-    const isZG = String(r['Zero Gamma']||'').includes('分界'); const isBig = String(r['大資金']||'').includes('大資金');
-    const pctC = Math.round(c/maxV*100); const pctP = Math.round(p/maxV*100);
-    html += `<div class="sr-row" style="${isZG?'background:rgba(163,113,247,0.08)':''}">
-      <span class="sr-strike">${strike.toLocaleString()}</span>
-      <span class="sr-bar-wrap"><div class="sr-bar-bg"><div class="sr-bar-c" style="width:${pctC}%"></div><div class="sr-bar-p" style="width:${pctP}%"></div></div></span>
-      <span class="sr-num">C:${Math.round(c/1000)}K P:${Math.round(p/1000)}K</span>
-      ${isZG?'<span class="bdg bdg-zg">ZG</span>':''}${isBig?'<span class="bdg bdg-big">大資金</span>':''}
+    const strike=safeNum(r['履約價']), c=safeNum(r['Call未平倉']), p=safeNum(r['Put未平倉']);
+    const isZG=String(r['Zero Gamma']||'').includes('分界'), isBig=String(r['大資金']||'').includes('大資金');
+    html+=`<div class="sr-row-b ${isZG?'zg':''}">
+      <div class="sr-left"><div class="sr-bar-c" style="width:${Math.round(c/maxV*130)}px"></div><span style="font-size:9px;color:var(--red);min-width:28px;text-align:right">${Math.round(c/1000)}K</span></div>
+      <div class="sr-mid">${strike.toLocaleString()}${isZG?'<span class="bdg bdg-zg">ZG</span>':''}${isBig?'<span class="bdg bdg-big">大</span>':''}</div>
+      <div class="sr-right"><span style="font-size:9px;color:var(--green);min-width:28px">${Math.round(p/1000)}K</span><div class="sr-bar-p" style="width:${Math.round(p/maxV*130)}px"></div></div>
     </div>`;
   });
-  div.innerHTML = html;
+  div.innerHTML=html;
 }
 
-// ========== 圖表 ==========
 function mkChart(id, labels, datasets) {
-  const el = document.getElementById(id); if(!el) return;
+  const el=document.getElementById(id); if(!el) return;
   if(charts[id]) charts[id].destroy();
-  charts[id] = new Chart(el.getContext('2d'),{
-    type:'line', data:{labels, datasets:datasets.map(d=>({...d,tension:0.3,pointRadius:1,borderWidth:1.5,fill:false}))},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
-      scales:{x:{ticks:{font:{size:8},maxRotation:45}},y:{ticks:{font:{size:8}},grid:{color:'rgba(255,255,255,0.05)'}}}}
-  });
+  charts[id]=new Chart(el.getContext('2d'),{type:'line',data:{labels,datasets:datasets.map(d=>({...d,tension:0.3,pointRadius:1,borderWidth:1.5,fill:false}))},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:8},maxRotation:45}},y:{ticks:{font:{size:8}},grid:{color:'rgba(255,255,255,0.05)'}}}}});
 }
 function buildCharts() {
-  const f = DATA.foreign.slice(-15); const d = DATA.dealer.slice(-15);
-  const dates = f.map(r=>String(r['日期']||'').replace(/\d{4}\//,'').split(' ')[0]);
-  const ddates = d.map(r=>String(r['日期']||'').replace(/\d{4}\//,'').split(' ')[0]);
+  const f=DATA.foreign.slice(-15), d=DATA.dealer.slice(-15);
+  const dates=f.map(r=>String(r['日期']||'').replace(/\d{4}\//,'').split(' ')[0]);
+  const ddates=d.map(r=>String(r['日期']||'').replace(/\d{4}\//,'').split(' ')[0]);
   mkChart('cBig',dates,[{data:f.map(r=>safeNum(r['大台多'])),borderColor:'#58a6ff'},{data:f.map(r=>safeNum(r['大台空'])),borderColor:'#f85149'},{data:d.map(r=>safeNum(r['大台多'])),borderColor:'#3fb950'},{data:d.map(r=>safeNum(r['大台空'])),borderColor:'#d2991d'}]);
   mkChart('cSmall',dates,[{data:f.map(r=>safeNum(r['小台多'])),borderColor:'#58a6ff'},{data:f.map(r=>safeNum(r['小台空'])),borderColor:'#f85149'},{data:d.map(r=>safeNum(r['小台多'])),borderColor:'#3fb950'},{data:d.map(r=>safeNum(r['小台空'])),borderColor:'#d2991d'}]);
   mkChart('cMicro',dates,[{data:f.map(r=>safeNum(r['微台多'])),borderColor:'#58a6ff'},{data:f.map(r=>safeNum(r['微台空'])),borderColor:'#f85149'},{data:d.map(r=>safeNum(r['微台多'])),borderColor:'#3fb950'},{data:d.map(r=>safeNum(r['微台空'])),borderColor:'#d2991d'}]);
@@ -333,13 +276,13 @@ function buildCharts() {
 }
 
 function switchTab(id) {
-  const ids = ['home','foreign','dealer','futchart','optchart','sr','srweek'];
+  const ids=['home','foreign','dealer','futchart','optchart','sr','srweek'];
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',ids[i]===id));
   document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id));
   if(id==='futchart'||id==='optchart') setTimeout(buildCharts,80);
 }
 function switchSub(parentId, subId) {
-  const parent = document.getElementById(parentId);
+  const parent=document.getElementById(parentId);
   parent.querySelectorAll('.sub-tab').forEach((t,i)=>t.classList.toggle('active',parent.querySelectorAll('.sub-section')[i]?.id===subId));
   parent.querySelectorAll('.sub-section').forEach(s=>s.classList.toggle('active',s.id===subId));
   setTimeout(buildCharts,80);
