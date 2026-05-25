@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-台指期籌碼自動抓取系統
-新增：GEX計算、C/P比、Zero Gamma、大資金異動、TradingView字串
+台指期籌碼自動抓取系統 v7
+新增：週選支撐壓力、histock 月選支撐壓力
 """
 
 import os, json, time, requests
@@ -63,8 +63,6 @@ def calc_diff(today, yesterday):
 
 # ────────────────────────────────────────────
 # 1. 抓期貨未平倉餘額
-# 自營商（15格）：多單=[9]  空單=[11]
-# 外資  （13格）：多單=[7]  空單=[9]
 # ────────────────────────────────────────────
 def fetch_futures(date_str):
     url = "https://www.taifex.com.tw/cht/3/futContractsDate"
@@ -90,7 +88,7 @@ def fetch_futures(date_str):
                     break
 
             if not target_table:
-                print(f" ⚠️  {name} 今日無資料")
+                print(f"  ⚠️  {name} 今日無資料")
                 continue
 
             for row in target_table.find_all("tr"):
@@ -117,8 +115,6 @@ def fetch_futures(date_str):
 
 # ────────────────────────────────────────────
 # 2. 抓選擇權未平倉餘額
-# 買權Call：自營（16格）BC=[10] SC=[12]  外資（13格）BC=[7] SC=[9]
-# 賣權Put： 自營（14格）BP=[8]  SP=[10]  外資（13格）BP=[7] SP=[9]
 # ────────────────────────────────────────────
 def fetch_options(date_str):
     url = "https://www.taifex.com.tw/cht/3/callsAndPutsDate"
@@ -189,8 +185,7 @@ def fetch_options(date_str):
     return result
 
 # ────────────────────────────────────────────
-# 3. 抓支撐壓力（各履約價未平倉）- 月選
-# 資料來源：https://histock.tw/stock/option.aspx?m=month
+# 3a. 抓月選支撐壓力（從 histock）
 # ────────────────────────────────────────────
 def fetch_support_resistance(date_str):
     url = "https://histock.tw/stock/option.aspx?m=month"
@@ -202,54 +197,115 @@ def fetch_support_resistance(date_str):
         resp.encoding = "utf-8"
         soup = BeautifulSoup(resp.text, "html.parser")
 
-        # 尋找表格
-        target_table = None
-        for t in soup.find_all("table"):
-            if "履約價" in t.get_text() and "未平倉" in t.get_text():
-                target_table = t
-                break
-
-        if not target_table:
-            print("  ⚠️  找不到支撐壓力表格")
+        table = soup.find("table", class_="tb-stock")
+        if not table:
+            print("  ⚠️  找不到月選支撐壓力表格")
             return []
 
-        for row in target_table.find_all("tr"):
+        rows = table.find_all("tr")
+        for row in rows:
             tds = row.find_all("td")
+            if not tds:
+                continue
+            
             texts = [td.get_text(strip=True) for td in tds]
             
-            if len(texts) < 10:
+            strike_th = row.find("th")
+            if not strike_th:
                 continue
-                
+            
+            strike_text = strike_th.get_text(strip=True).replace(",", "").replace("@", "")
+            
             try:
-                strike  = int(texts[7].replace(",", "").strip())
-                call_oi = safe_int(texts[6])
-                put_oi  = safe_int(texts[9])
-            except (ValueError, IndexError):
+                strike = int(float(strike_text))
+            except:
                 continue
-
+            
+            if strike < 1000 or strike > 100000:
+                continue
+            
+            if len(texts) < 14:
+                continue
+            
+            call_oi = safe_int(texts[6])
+            put_oi = safe_int(texts[13])
+            
             result[strike] = {"call_oi": call_oi, "put_oi": put_oi}
 
         sr_list = [{"履約價":k, "call_oi":v["call_oi"], "put_oi":v["put_oi"]}
                    for k, v in sorted(result.items())
                    if v["call_oi"] + v["put_oi"] > 0]
 
-        print(f"  ✅ 支撐壓力：抓到 {len(sr_list)} 個履約價")
+        print(f"  ✅ 月選支撐壓力：抓到 {len(sr_list)} 個履約價")
         return sr_list
 
     except Exception as e:
-        print(f"  ❌ 支撐壓力失敗：{e}")
+        print(f"  ❌ 月選支撐壓力失敗：{e}")
         return []
+
 # ────────────────────────────────────────────
-# 4. GEX 計算（簡化版）
+# 3b. 抓週選支撐壓力（從 histock）
+# ────────────────────────────────────────────
+def fetch_weekly_support_resistance(date_str):
+    url = "https://histock.tw/stock/option.aspx?m=week"
+    result = {}
+
+    try:
+        s = requests.Session()
+        resp = s.get(url, headers=get_headers("https://histock.tw/"), timeout=20)
+        resp.encoding = "utf-8"
+        soup = BeautifulSoup(resp.text, "html.parser")
+
+        table = soup.find("table", class_="tb-stock")
+        if not table:
+            print("  ⚠️  找不到週選支撐壓力表格")
+            return []
+
+        rows = table.find_all("tr")
+        for row in rows:
+            tds = row.find_all("td")
+            if not tds:
+                continue
+            
+            texts = [td.get_text(strip=True) for td in tds]
+            
+            strike_th = row.find("th")
+            if not strike_th:
+                continue
+            
+            strike_text = strike_th.get_text(strip=True).replace(",", "").replace("@", "")
+            
+            try:
+                strike = int(float(strike_text))
+            except:
+                continue
+            
+            if strike < 1000 or strike > 100000:
+                continue
+            
+            if len(texts) < 14:
+                continue
+            
+            call_oi = safe_int(texts[6])
+            put_oi = safe_int(texts[13])
+            
+            result[strike] = {"call_oi": call_oi, "put_oi": put_oi}
+
+        sr_list = [{"履約價":k, "call_oi":v["call_oi"], "put_oi":v["put_oi"]}
+                   for k, v in sorted(result.items())
+                   if v["call_oi"] + v["put_oi"] > 0]
+
+        print(f"  ✅ 週選支撐壓力：抓到 {len(sr_list)} 個履約價")
+        return sr_list
+
+    except Exception as e:
+        print(f"  ❌ 週選支撐壓力失敗：{e}")
+        return []
+
+# ────────────────────────────────────────────
+# 4. GEX 計算
 # ────────────────────────────────────────────
 def calc_gex(sr_list):
-    """
-    計算每個履約價的 GEX、C/P比、Zero Gamma、大資金判斷
-    GEX = Call未平倉 - Put未平倉
-    正值 = Call為主 = 壓力（造市商壓縮波動）
-    負值 = Put為主  = 支撐（造市商放大波動）
-    Zero Gamma = GEX最接近0的履約價（多空分界）
-    """
     if not sr_list:
         return []
 
@@ -261,7 +317,6 @@ def calc_gex(sr_list):
         p    = d["put_oi"]
         gex  = c - p
         ratio = round(c / p, 2) if p > 0 else 999.0
-        # 佔總未平倉比例（判斷是否大資金）
         weight = round((c + p) / total_oi * 100, 1) if total_oi > 0 else 0
 
         if ratio > 3.0:     nature = "⬆️強壓力"
@@ -276,16 +331,14 @@ def calc_gex(sr_list):
             **d,
             "gex":      gex,
             "cp_ratio": ratio,
-            "weight":   weight,   # 佔比 %
+            "weight":   weight,
             "nature":   nature,
         })
 
-    # Zero Gamma：GEX 最接近 0 的位置（多空分界線）
     min_abs = min(abs(r["gex"]) for r in result)
     for r in result:
         r["is_zero_gamma"] = (abs(r["gex"]) == min_abs)
 
-    # 大資金判斷：佔比超過 5% 的履約價
     for r in result:
         r["is_big_money"] = r["weight"] >= 5.0
 
@@ -293,14 +346,12 @@ def calc_gex(sr_list):
 
 # ────────────────────────────────────────────
 # 5. 產生 TradingView 字串
-# 格式：履約價,Call,Put,GEX,CP比,是否ZeroGamma;...
 # ────────────────────────────────────────────
 def generate_tv_string(sr_with_gex):
     parts = []
     for d in sorted(sr_with_gex, key=lambda x: x["履約價"], reverse=True):
         ratio = d["cp_ratio"]
         zg    = 1 if d["is_zero_gamma"] else 0
-        # 保留壓力位、支撐位、Zero Gamma
         if ratio > 1.3 or ratio < 0.77 or zg == 1:
             parts.append(
                 f"{d['履約價']},{d['call_oi']},{d['put_oi']},{d['gex']},{d['cp_ratio']},{zg}"
@@ -308,18 +359,16 @@ def generate_tv_string(sr_with_gex):
     return ";".join(parts)
 
 # ────────────────────────────────────────────
-# 6. 連線 Google 試算表（支援 GitHub Actions）
+# 6. 連線 Google 試算表
 # ────────────────────────────────────────────
 def connect_google_sheet():
     try:
         import gspread
         from google.oauth2.service_account import Credentials
         
-        # 先嘗試從環境變數讀取（GitHub Actions）
         creds_json = os.environ.get("GOOGLE_SHEETS_CREDENTIALS")
         
         if creds_json:
-            # 在雲端執行：從環境變數讀取金鑰
             creds_dict = json.loads(creds_json)
             scopes = [
                 "https://www.googleapis.com/auth/spreadsheets",
@@ -327,7 +376,6 @@ def connect_google_sheet():
             ]
             creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
         else:
-            # 在本機執行：從 JSON 檔案讀取金鑰
             scopes = [
                 "https://www.googleapis.com/auth/spreadsheets",
                 "https://www.googleapis.com/auth/drive",
@@ -341,6 +389,7 @@ def connect_google_sheet():
     except Exception as e:
         print(f"  ❌ 連線失敗：{e}")
         return None
+
 # ────────────────────────────────────────────
 # 7. 確保工作表存在
 # ────────────────────────────────────────────
@@ -353,16 +402,6 @@ def ensure_sheet(sh, name, headers=None):
     except:
         ws = sh.add_worksheet(title=name, rows=500, cols=15)
         ws.append_row(headers)
-        try:
-            end_col = chr(ord('A') + len(headers) - 1)
-            ws.format(f"A1:{end_col}1", {
-                "backgroundColor": {"red":0.1,"green":0.13,"blue":0.49},
-                "textFormat": {"foregroundColor":{"red":1,"green":1,"blue":1},
-                               "bold":True, "fontSize":10},
-                "horizontalAlignment": "CENTER"
-            })
-        except:
-            pass
         print(f"  ✅ 新建工作表：{name}")
     return ws
 
@@ -404,11 +443,11 @@ def write_chips_to_google(sh, date_str, futures_diff, options_diff):
             print(f"  ❌ {sheet_name} 失敗：{e}")
 
 # ────────────────────────────────────────────
-# 9. 寫入支撐壓力（含 GEX 與 TradingView 字串）
+# 9a. 寫入月選支撐壓力
 # ────────────────────────────────────────────
 def write_sr_to_google(sh, date_str, sr_with_gex):
     if not sr_with_gex:
-        print("  ⚠️  無支撐壓力資料，跳過")
+        print("  ⚠️  無月選支撐壓力資料，跳過")
         return
 
     try:
@@ -419,42 +458,14 @@ def write_sr_to_google(sh, date_str, sr_with_gex):
         except:
             ws = sh.add_worksheet(title=sheet_name, rows=500, cols=12)
 
-        # ── 第1行：說明 ──
-        ws.append_row(["📋 TradingView 數據字串（每天複製 A2 這格貼到指標）"])
-
-        # ── 第2行：TradingView 字串（黃底醒目）──
+        ws.append_row(["📋 月選 TradingView 數據字串（每天複製 A2 這格貼到指標）"])
         tv_string = generate_tv_string(sr_with_gex)
         ws.append_row([tv_string])
-
-        # ── 第3行：空白分隔 ──
         ws.append_row([""])
 
-        # ── 第4行：詳細表格標題 ──
         headers = ["更新日期","履約價","Call未平倉","Put未平倉","GEX(C-P)","C/P比","佔比%","性質","Zero Gamma","大資金"]
         ws.append_row(headers)
 
-        # 格式化
-        try:
-            ws.format("A2", {
-                "backgroundColor": {"red":1.0,"green":0.95,"blue":0.2},
-                "textFormat": {"foregroundColor":{"red":0,"green":0,"blue":0},
-                               "bold":True, "fontSize":9},
-            })
-            ws.format("A1", {
-                "backgroundColor": {"red":0.15,"green":0.15,"blue":0.15},
-                "textFormat": {"foregroundColor":{"red":1,"green":1,"blue":1},
-                               "bold":True},
-            })
-            ws.format("A4:J4", {
-                "backgroundColor": {"red":0.1,"green":0.13,"blue":0.49},
-                "textFormat": {"foregroundColor":{"red":1,"green":1,"blue":1},
-                               "bold":True, "fontSize":10},
-                "horizontalAlignment": "CENTER"
-            })
-        except:
-            pass
-
-        # ── 資料列 ──
         rows_to_write = []
         for d in sorted(sr_with_gex, key=lambda x: x["履約價"], reverse=True):
             rows_to_write.append([
@@ -473,22 +484,68 @@ def write_sr_to_google(sh, date_str, sr_with_gex):
         if rows_to_write:
             ws.append_rows(rows_to_write)
 
-        # ── 印出關鍵位摘要 ──
         top_call = sorted(sr_with_gex, key=lambda x: x["call_oi"], reverse=True)[:3]
         top_put  = sorted(sr_with_gex, key=lambda x: x["put_oi"],  reverse=True)[:3]
         zero_gex = [d for d in sr_with_gex if d["is_zero_gamma"]]
         big_money = [d for d in sr_with_gex if d["is_big_money"]]
 
-        print(f"  ✅ 支撐壓力：寫入 {len(rows_to_write)} 筆")
+        print(f"  ✅ 月選支撐壓力：寫入 {len(rows_to_write)} 筆")
         print(f"  🔴 最大壓力位：{[d['履約價'] for d in top_call]}")
         print(f"  🟢 最大支撐位：{[d['履約價'] for d in top_put]}")
         print(f"  ⚪ Zero Gamma（多空分界）：{[d['履約價'] for d in zero_gex]}")
         print(f"  💰 大資金位置：{[d['履約價'] for d in big_money]}")
-        print(f"  📋 TradingView 字串：{len(tv_string)} 字元")
         time.sleep(1.2)
 
     except Exception as e:
-        print(f"  ❌ 支撐壓力寫入失敗：{e}")
+        print(f"  ❌ 月選支撐壓力寫入失敗：{e}")
+
+# ────────────────────────────────────────────
+# 9b. 寫入週選支撐壓力
+# ────────────────────────────────────────────
+def write_sr_weekly_to_google(sh, date_str, sr_with_gex):
+    if not sr_with_gex:
+        print("  ⚠️  無週選支撐壓力資料，跳過")
+        return
+
+    try:
+        sheet_name = "支撐壓力_週選"
+        try:
+            ws = sh.worksheet(sheet_name)
+            ws.clear()
+        except:
+            ws = sh.add_worksheet(title=sheet_name, rows=500, cols=12)
+
+        ws.append_row(["📋 週選 TradingView 數據字串（每天複製 A2 這格貼到指標）"])
+        tv_string = generate_tv_string(sr_with_gex)
+        ws.append_row([tv_string])
+        ws.append_row([""])
+
+        headers = ["更新日期","履約價","Call未平倉","Put未平倉","GEX(C-P)","C/P比","佔比%","性質","Zero Gamma","大資金"]
+        ws.append_row(headers)
+
+        rows_to_write = []
+        for d in sorted(sr_with_gex, key=lambda x: x["履約價"], reverse=True):
+            rows_to_write.append([
+                date_str,
+                d["履約價"],
+                d["call_oi"],
+                d["put_oi"],
+                d["gex"],
+                d["cp_ratio"],
+                d["weight"],
+                d["nature"],
+                "✅ 多空分界" if d["is_zero_gamma"] else "",
+                "💰 大資金" if d["is_big_money"] else "",
+            ])
+
+        if rows_to_write:
+            ws.append_rows(rows_to_write)
+
+        print(f"  ✅ 週選支撐壓力：寫入 {len(rows_to_write)} 筆")
+        time.sleep(1.2)
+
+    except Exception as e:
+        print(f"  ❌ 週選支撐壓力寫入失敗：{e}")
 
 # ────────────────────────────────────────────
 # 10. 主程式
@@ -499,7 +556,7 @@ def main():
     prev_day = prev_weekday(now).strftime("%Y/%m/%d")
 
     print("=" * 55)
-    print(f"  台指期籌碼自動抓取 v6  {today}")
+    print(f"  台指期籌碼自動抓取 v7  {today}")
     print(f"  計算：今日未平倉 − {prev_day} 未平倉")
     print("=" * 55)
 
@@ -512,12 +569,18 @@ def main():
     print("\n📊 抓取選擇權未平倉口數...")
     options_today = fetch_options(today)
 
-    print("\n📊 抓取支撐壓力（各履約價未平倉）...")
+    print("\n📊 抓取月選支撐壓力...")
     sr_list = fetch_support_resistance(today)
 
+    print("\n📊 抓取週選支撐壓力...")
+    sr_weekly_list = fetch_weekly_support_resistance(today)
+
     # ── GEX 計算 ──
-    print("\n🔢 計算 GEX / C/P比 / Zero Gamma...")
+    print("\n🔢 計算月選 GEX / C/P比 / Zero Gamma...")
     sr_with_gex = calc_gex(sr_list)
+
+    print("🔢 計算週選 GEX / C/P比 / Zero Gamma...")
+    sr_weekly_with_gex = calc_gex(sr_weekly_list)
 
     # ── 存入歷史快取 ──
     history[today] = {"futures": futures_today, "options": options_today}
@@ -538,6 +601,7 @@ def main():
     if sh:
         write_chips_to_google(sh, today, futures_diff, options_diff)
         write_sr_to_google(sh, today, sr_with_gex)
+        write_sr_weekly_to_google(sh, today, sr_weekly_with_gex)
 
     # ── 摘要 ──
     def gf(p,i,k): return futures_diff.get(p,{}).get(i,{}).get(k,0)
