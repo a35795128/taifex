@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-台指期籌碼自動抓取系統 v6
+台指期籌碼自動抓取系統
 新增：GEX計算、C/P比、Zero Gamma、大資金異動、TradingView字串
 """
 
