@@ -57,9 +57,9 @@
   td { padding: 4px 3px; border-bottom: 1px solid var(--border); text-align: center; white-space: nowrap; }
   .pos { color: var(--red); } .neg { color: var(--green); }
 
-  tr.settle-wed { background: rgba(240,136,62,0.12); }
-  tr.settle-fri { background: rgba(88,166,255,0.12); }
-  tr.settle-month { background: rgba(248,81,73,0.12); }
+  tr.settle-wed { background: rgba(240,136,62,0.15); }
+  tr.settle-fri { background: rgba(88,166,255,0.15); }
+  tr.settle-month { background: rgba(248,81,73,0.15); }
 
   .chart-wrap { margin-bottom: 14px; }
   .chart-title { font-size: 11px; font-weight: 500; margin-bottom: 2px; }
@@ -74,7 +74,9 @@
 
   .sr-bilateral { max-width: 100%; overflow-x: auto; }
   .sr-row-b { display: flex; align-items: center; height: 26px; font-size: 10px; }
-  .sr-row-b.zg { background: rgba(163,113,247,0.1); border-radius: 4px; }
+  .sr-row-b.zg { background: rgba(163,113,247,0.12); border-radius: 4px; }
+  .sr-row-b.max-c { background: rgba(248,81,73,0.12); border-radius: 4px; }
+  .sr-row-b.max-p { background: rgba(63,185,80,0.12); border-radius: 4px; }
   .sr-left { flex: 1; display: flex; justify-content: flex-end; align-items: center; padding-right: 6px; }
   .sr-right { flex: 1; display: flex; align-items: center; padding-left: 6px; }
   .sr-bar-c { background: var(--red); height: 12px; border-radius: 2px 0 0 2px; margin-right: 4px; }
@@ -83,6 +85,8 @@
   .bdg { font-size: 7px; padding: 1px 4px; border-radius: 4px; margin-left: 2px; }
   .bdg-zg { background: rgba(163,113,247,0.2); color: var(--purple); }
   .bdg-big { background: rgba(210,153,29,0.2); color: var(--amber); }
+  .bdg-maxc { background: rgba(248,81,73,0.2); color: var(--red); }
+  .bdg-maxp { background: rgba(63,185,80,0.2); color: var(--green); }
   .update-time { text-align: center; font-size: 10px; color: var(--text2); padding: 10px; border-top: 1px solid var(--border); margin-top: 12px; }
 </style>
 </head>
@@ -106,7 +110,6 @@
   <button class="tab" onclick="switchTab('srweek')">週選壓力</button>
 </div>
 
-<!-- 首頁 -->
 <div id="home" class="section active">
   <div class="section-title">📅 月選（波段）</div>
   <div class="summary-grid">
@@ -126,7 +129,6 @@
   <div class="update-time" id="updateTime">最後更新：載入中...</div>
 </div>
 
-<!-- 外資 -->
 <div id="foreign" class="section">
   <div class="notice">
     📋 外資期貨+選擇權每日增減（紅=多增 綠=空增）<br>
@@ -142,7 +144,6 @@
   </table></div>
 </div>
 
-<!-- 自營 -->
 <div id="dealer" class="section">
   <div class="notice">
     📋 自營商期貨+選擇權每日增減（紅=多增 綠=空增）<br>
@@ -158,7 +159,6 @@
   </table></div>
 </div>
 
-<!-- 期貨圖 -->
 <div id="futchart" class="section">
   <div class="sub-tabs">
     <button class="sub-tab active" onclick="switchSub('futchart','fc-big')">大台</button>
@@ -197,7 +197,6 @@
   </div>
 </div>
 
-<!-- 選擇權圖 -->
 <div id="optchart" class="section">
   <div class="sub-tabs">
     <button class="sub-tab active" onclick="switchSub('optchart','oc-foreign')">外資</button>
@@ -225,16 +224,14 @@
   </div>
 </div>
 
-<!-- 月選 -->
 <div id="sr" class="section">
-  <div class="notice">📅 月選｜紅(Call)=壓力 ← → 綠(Put)=支撐｜紫底=Zero Gamma</div>
+  <div class="notice">📅 月選｜紅(Call)=壓力 ← → 綠(Put)=支撐｜<span style="background:rgba(163,113,247,0.12)">紫底</span>=ZG <span style="background:rgba(248,81,73,0.12)">紅底</span>=最強壓 <span style="background:rgba(63,185,80,0.12)">綠底</span>=最強撐</div>
   <div class="sr-bilateral" id="srList"></div>
   <div class="update-time" id="srTime"></div>
 </div>
 
-<!-- 週選 -->
 <div id="srweek" class="section">
-  <div class="notice">📅 週選｜適合短線當沖參考</div>
+  <div class="notice">📅 週選｜適合短線當沖參考｜<span style="background:rgba(163,113,247,0.12)">紫底</span>=ZG <span style="background:rgba(248,81,73,0.12)">紅底</span>=最強壓 <span style="background:rgba(63,185,80,0.12)">綠底</span>=最強撐</div>
   <div class="sr-bilateral" id="srWeekList"></div>
   <div class="update-time" id="srWeekTime"></div>
 </div>
@@ -361,13 +358,30 @@ function buildBilateral(divId, dataRows) {
   if(!dataRows.length){ div.innerHTML='<div style="padding:20px;color:#888;text-align:center">尚無資料</div>'; return; }
   const sorted=[...dataRows].sort((a,b)=>safeNum(b['履約價'])-safeNum(a['履約價']));
   const maxV=Math.max(...sorted.map(r=>safeNum(r['Call未平倉'])+safeNum(r['Put未平倉'])),1);
+  // 找最大壓力（Call OI 最大）和最大支撐（Put OI 最大）
+  const maxCallOI = Math.max(...sorted.map(r=>safeNum(r['Call未平倉'])));
+  const maxPutOI = Math.max(...sorted.map(r=>safeNum(r['Put未平倉'])));
   let html='';
   sorted.forEach(r=>{
     const strike=safeNum(r['履約價']), c=safeNum(r['Call未平倉']), p=safeNum(r['Put未平倉']);
-    const isZG=String(r['Zero Gamma']||'').includes('分界'), isBig=String(r['大資金']||'').includes('大資金');
-    html+=`<div class="sr-row-b ${isZG?'zg':''}">
+    const isZG=String(r['Zero Gamma']||'').includes('分界');
+    const isBig=String(r['大資金']||'').includes('大資金');
+    const isMaxC = (c === maxCallOI && c > 0);
+    const isMaxP = (p === maxPutOI && p > 0);
+    // 決定背景色 class（ZG 優先，再來是最強壓/撐）
+    let bgClass = '';
+    if (isZG) bgClass = 'zg';
+    else if (isMaxC) bgClass = 'max-c';
+    else if (isMaxP) bgClass = 'max-p';
+    // 標籤
+    let badges = '';
+    if (isZG) badges += '<span class="bdg bdg-zg">ZG</span> ';
+    if (isBig) badges += '<span class="bdg bdg-big">大</span> ';
+    if (isMaxC && !isZG) badges += '<span class="bdg bdg-maxc">最強壓</span> ';
+    if (isMaxP && !isZG) badges += '<span class="bdg bdg-maxp">最強撐</span> ';
+    html+=`<div class="sr-row-b ${bgClass}">
       <div class="sr-left"><div class="sr-bar-c" style="width:${Math.round(c/maxV*130)}px"></div><span style="font-size:9px;color:var(--red);min-width:28px;text-align:right">${Math.round(c/1000)}K</span></div>
-      <div class="sr-mid">${strike.toLocaleString()}${isZG?'<span class="bdg bdg-zg">ZG</span>':''}${isBig?'<span class="bdg bdg-big">大</span>':''}</div>
+      <div class="sr-mid">${strike.toLocaleString()}${badges?'<br><span style="font-weight:400">'+badges+'</span>':''}</div>
       <div class="sr-right"><span style="font-size:9px;color:var(--green);min-width:28px">${Math.round(p/1000)}K</span><div class="sr-bar-p" style="width:${Math.round(p/maxV*130)}px"></div></div>
     </div>`;
   });
