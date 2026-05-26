@@ -329,7 +329,7 @@ async function loadData() {
 }
 
 function buildChips() {
-  const f = DATA.foreign[0] || {}; const d = DATA.dealer[0] || {};
+  const f = DATA.foreign[DATA.foreign.length - 1] || {}; const d = DATA.dealer[DATA.dealer.length - 1] || {};
   const keys = ['BC','BP','SC','SP','大台多','大台空','小台多','小台空'];
   let html = '<div class="chip-group"><span class="chip-group-title foreign">外資</span>';
   keys.forEach(k=>{ const v=safeNum(f[k]); html+=`<div class="trend-row"><span class="trend-label">${k}</span><span class="trend-val ${cls(v)}">${fmt(v)}</span></div>`; });
