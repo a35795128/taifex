@@ -13,24 +13,17 @@
     --bg: #0d1117; --bg2: #161b22; --bg3: #21262d;
     --text: #f0f0f0; --text2: #8b949e; --border: #30363d;
     --red: #f85149; --green: #3fb950; --blue: #58a6ff; --purple: #a371f7; --amber: #d2991d;
-    --orange: #f0883e; --teal: #3fb950;
+    --orange: #f0883e;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; padding-bottom: 20px; }
 
-  /* 標題列：標題在左，頁籤在右 */
   .header { padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 6px; }
   .header-left { display: flex; align-items: center; gap: 8px; }
   .header h1 { font-size: 16px; font-weight: 600; white-space: nowrap; }
   .header-sub { font-size: 9px; color: var(--text2); white-space: nowrap; }
   .refresh-btn { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 5px 10px; cursor: pointer; color: var(--text); font-size: 11px; white-space: nowrap; }
 
-  /* 頁籤在標題列右邊，用更小的圓角 */
-  .header-tabs { display: flex; gap: 2px; flex-wrap: wrap; }
-  .header-tabs .tab { flex-shrink: 0; padding: 4px 8px; font-size: 10px; border: 1px solid var(--border); border-radius: 14px; cursor: pointer; background: transparent; color: var(--text2); white-space: nowrap; }
-  .header-tabs .tab.active { background: var(--blue); color: #fff; border-color: var(--blue); }
-
-  /* 下方六個主要頁籤列 */
   .main-tabs { display: flex; gap: 3px; padding: 8px 12px; overflow-x: auto; border-bottom: 1px solid var(--border); }
   .main-tabs .tab { flex-shrink: 0; padding: 5px 10px; font-size: 11px; border: 1px solid var(--border); border-radius: 16px; cursor: pointer; background: transparent; color: var(--text2); white-space: nowrap; }
   .main-tabs .tab.active { background: var(--blue); color: #fff; border-color: var(--blue); }
@@ -38,35 +31,14 @@
   .section { display: none; padding: 12px; }
   .section.active { display: block; }
 
-  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
-  .card.full { grid-column: 1 / -1; }
-  .card h3 { font-size: 10px; color: var(--text2); letter-spacing: 1px; margin-bottom: 4px; }
-  .card .big { font-size: 24px; font-weight: 700; }
-  .card .sub { font-size: 10px; color: var(--text2); margin-top: 2px; }
-  .red { color: var(--red); } .green { color: var(--green); } .blue { color: var(--blue); } .purple { color: var(--purple); }
-
-  .section-title { font-size: 11px; font-weight: 600; color: var(--text2); margin: 8px 0 6px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
-
-  /* 籌碼快照：外資用藍色標籤，自營用紫色標籤 */
-  .chip-group { margin-bottom: 8px; }
-  .chip-group-title { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
-  .chip-group-title.foreign { background: rgba(88,166,255,0.2); color: var(--blue); }
-  .chip-group-title.dealer { background: rgba(163,113,247,0.2); color: var(--purple); }
-  .trend-row { display: flex; justify-content: space-between; padding: 4px 8px; font-size: 11px; }
-  .trend-label { color: var(--text2); }
-  .trend-val { font-weight: 600; }
-
   .notice { font-size: 10px; color: var(--text2); padding: 6px 10px; background: var(--bg2); border-radius: 8px; margin-bottom: 10px; line-height: 1.6; }
 
-  /* 表格 */
   .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   table { width: 100%; font-size: 10px; border-collapse: collapse; min-width: 600px; }
   th { padding: 5px 3px; color: var(--text2); font-weight: 400; border-bottom: 1px solid var(--border); text-align: center; font-size: 9px; white-space: nowrap; background: var(--bg2); }
   td { padding: 4px 3px; border-bottom: 1px solid var(--border); text-align: center; white-space: nowrap; }
   .pos { color: var(--red); } .neg { color: var(--green); }
 
-  /* 結算日背景色 */
   tr.settle-wed { background: rgba(240,136,62,0.12); }
   tr.settle-fri { background: rgba(88,166,255,0.12); }
   tr.settle-month { background: rgba(248,81,73,0.12); }
@@ -98,7 +70,6 @@
 </head>
 <body>
 
-<!-- 標題列：標題在左，頁籤在右 -->
 <div class="header">
   <div class="header-left">
     <h1>📊 儀表板</h1>
@@ -107,7 +78,6 @@
   <button class="refresh-btn" onclick="loadData()">🔄 更新</button>
 </div>
 
-<!-- 下方六個主要頁籤：外資 自營 期貨圖 選擇權圖 月選壓力 週選壓力 -->
 <div class="main-tabs">
   <button class="tab active" onclick="switchTab('foreign')">外資</button>
   <button class="tab" onclick="switchTab('dealer')">自營</button>
@@ -117,10 +87,10 @@
   <button class="tab" onclick="switchTab('srweek')">週選壓力</button>
 </div>
 
-<!-- 內容區 -->
 <div id="foreign" class="section active">
   <div class="notice">
     📋 外資期貨+選擇權每日增減（紅=多增 綠=空增）<br>
+    <span style="font-size:9px;color:var(--text2)">🔴紅底=月結算 🟠橘底=週三結算 🔵藍底=週五結算</span><br>
     <span style="font-size:9px;color:var(--text2)">BC=看漲 BP=看跌 SC=看不漲 SP=看不跌</span>
   </div>
   <div class="table-wrap"><table>
@@ -135,6 +105,7 @@
 <div id="dealer" class="section">
   <div class="notice">
     📋 自營商期貨+選擇權每日增減（紅=多增 綠=空增）<br>
+    <span style="font-size:9px;color:var(--text2)">🔴紅底=月結算 🟠橘底=週三結算 🔵藍底=週五結算</span><br>
     <span style="font-size:9px;color:var(--text2)">BC=看漲 BP=看跌 SC=看不漲 SP=看不跌</span>
   </div>
   <div class="table-wrap"><table>
@@ -146,7 +117,6 @@
   </table></div>
 </div>
 
-<!-- 期貨圖 -->
 <div id="futchart" class="section">
   <div class="sub-tabs">
     <button class="sub-tab active" onclick="switchSub('futchart','fc-big')">大台</button>
@@ -185,7 +155,6 @@
   </div>
 </div>
 
-<!-- 選擇權圖 -->
 <div id="optchart" class="section">
   <div class="sub-tabs">
     <button class="sub-tab active" onclick="switchSub('optchart','oc-foreign')">外資</button>
@@ -213,14 +182,12 @@
   </div>
 </div>
 
-<!-- 月選 -->
 <div id="sr" class="section">
   <div class="notice">📅 月選｜紅(Call)=壓力 ← → 綠(Put)=支撐｜紫底=Zero Gamma</div>
   <div class="sr-bilateral" id="srList"></div>
   <div class="update-time" id="srTime"></div>
 </div>
 
-<!-- 週選 -->
 <div id="srweek" class="section">
   <div class="notice">📅 週選｜適合短線當沖參考</div>
   <div class="sr-bilateral" id="srWeekList"></div>
@@ -236,7 +203,7 @@ function safeNum(s) { const n = parseFloat(String(s||0).replace(/,/g,'')); retur
 function fmt(v) { return (v>=0?'+':'')+Math.round(v).toLocaleString(); }
 function cls(v) { return v>0?'pos':v<0?'neg':''; }
 
-// 台灣結算日列表（2026年，可自行擴充）
+// 台灣結算日列表
 const SETTLE_DAYS = {
   '01/07':'wed','01/14':'wed','01/21':'month','01/28':'wed',
   '02/04':'wed','02/11':'wed','02/18':'month','02/25':'wed',
@@ -253,13 +220,11 @@ const SETTLE_DAYS = {
 };
 
 function getSettleClass(dateStr) {
-  // dateStr 格式: "05/25" 或 "2026/05/25"
   const parts = dateStr.split('/');
   const mmdd = parts.slice(-2).join('/');
   const t = SETTLE_DAYS[mmdd];
   if (t === 'month') return 'settle-month';
   if (t === 'wed') return 'settle-wed';
-  // 週五結算：檢查是否為週五（簡單判斷，可在需要時擴充）
   return '';
 }
 
@@ -273,65 +238,37 @@ async function fetchSheet(name) {
   } catch(e) { return []; }
 }
 
-function buildSummaryCard(dataRows, prefix) {
-  if(!dataRows.length) return;
-  const sorted = [...dataRows].sort((a,b)=>safeNum(b['履約價'])-safeNum(a['履約價']));
-  let topC = sorted.reduce((a,b)=>safeNum(a['Call未平倉'])>safeNum(b['Call未平倉'])?a:b);
-  let topP = sorted.reduce((a,b)=>safeNum(a['Put未平倉'])>safeNum(b['Put未平倉'])?a:b);
-  let zg = sorted.find(r=>String(r['Zero Gamma']||'').includes('分界'));
-  document.getElementById(prefix+'Resist').textContent = safeNum(topC['履約價']).toLocaleString();
-  document.getElementById(prefix+'ResistOI').textContent = `Call ${Math.round(safeNum(topC['Call未平倉'])/1000)}K 口`;
-  document.getElementById(prefix+'Support').textContent = safeNum(topP['履約價']).toLocaleString();
-  document.getElementById(prefix+'SupportOI').textContent = `Put ${Math.round(safeNum(topP['Put未平倉'])/1000)}K 口`;
-  const zgStrike = zg ? safeNum(zg['履約價']) : null;
-  document.getElementById(prefix+'ZG').textContent = zgStrike ? zgStrike.toLocaleString() : '-';
-  const strikes = sorted.map(r=>safeNum(r['履約價']));
-  const mid = Math.round((Math.max(...strikes) + Math.min(...strikes)) / 2);
-  document.getElementById(prefix+'Tidx').textContent = '~' + mid.toLocaleString();
-  document.getElementById(prefix+'Pos').textContent = zgStrike ? (mid > zgStrike ? '🟢 偏多區' : '🔴 偏空區') : '';
-}
-
 async function loadData() {
   document.getElementById('statusText').textContent = '更新中...';
-  const [fRows, dRows, srRows, srWeekRows] = await Promise.all([
-    fetchSheet('外資總表'), fetchSheet('自營總表'), fetchSheet('支撐壓力'), fetchSheet('支撐壓力_週選')
-  ]);
-  DATA.foreign = fRows.filter(r=>r['日期']&&String(r['日期']).match(/\d/));
-  DATA.dealer  = dRows.filter(r=>r['日期']&&String(r['日期']).match(/\d/));
-  DATA.sr      = srRows.filter(r=>String(r['履約價']||'').match(/^\d{4,6}$/));
-  DATA.srWeek  = srWeekRows.filter(r=>String(r['履約價']||'').match(/^\d{4,6}$/));
+  try {
+    const [fRows, dRows, srRows, srWeekRows] = await Promise.all([
+      fetchSheet('外資總表'), fetchSheet('自營總表'), fetchSheet('支撐壓力'), fetchSheet('支撐壓力_週選')
+    ]);
+    DATA.foreign = fRows.filter(r=>r['日期']&&String(r['日期']).match(/\d/));
+    DATA.dealer  = dRows.filter(r=>r['日期']&&String(r['日期']).match(/\d/));
+    DATA.sr      = srRows.filter(r=>String(r['履約價']||'').match(/^\d{4,6}$/));
+    DATA.srWeek  = srWeekRows.filter(r=>String(r['履約價']||'').match(/^\d{4,6}$/));
 
-  buildSummaryCard(DATA.sr, 'm');
-  buildSummaryCard(DATA.srWeek, 'w');
-  buildChips();
-  buildTable('foreignTbody', DATA.foreign);
-  buildTable('dealerTbody', DATA.dealer);
-  buildBilateral('srList', DATA.sr);
-  buildBilateral('srWeekList', DATA.srWeek);
-  buildCharts();
+    buildTable('foreignTbody', DATA.foreign);
+    buildTable('dealerTbody', DATA.dealer);
+    buildBilateral('srList', DATA.sr);
+    buildBilateral('srWeekList', DATA.srWeek);
+    buildCharts();
 
-  const now = new Date().toLocaleString('zh-TW', {hour12: false});
-  ['updateTime','srTime','srWeekTime'].forEach(id=>{
-    const el=document.getElementById(id); if(el) el.textContent=`最後更新：${now}`;
-  });
-  document.getElementById('statusText').textContent = '✅ 每日 15:10 自動更新';
-}
-
-function buildChips() {
-  const f = DATA.foreign[0] || {}; const d = DATA.dealer[0] || {};
-  const keys = ['BC','BP','SC','SP','大台多','大台空','小台多','小台空'];
-  let html = '<div class="chip-group"><span class="chip-group-title foreign">外資</span>';
-  keys.forEach(k=>{ const v=safeNum(f[k]); html+=`<div class="trend-row"><span class="trend-label">${k}</span><span class="trend-val ${cls(v)}">${fmt(v)}</span></div>`; });
-  html += '</div><div class="chip-group"><span class="chip-group-title dealer">自營</span>';
-  keys.forEach(k=>{ const v=safeNum(d[k]); html+=`<div class="trend-row"><span class="trend-label">${k}</span><span class="trend-val ${cls(v)}">${fmt(v)}</span></div>`; });
-  html += '</div>';
-  document.getElementById('homeChips').innerHTML = html||'尚無資料';
+    const now = new Date().toLocaleString('zh-TW', {hour12: false});
+    ['srTime','srWeekTime'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.textContent=`最後更新：${now}`;
+    });
+    document.getElementById('statusText').textContent = '✅ 每日 15:10 自動更新';
+  } catch(e) {
+    document.getElementById('statusText').textContent = '❌ 更新失敗';
+    console.error(e);
+  }
 }
 
 function buildTable(tbodyId, rows) {
   const tb=document.getElementById(tbodyId); tb.innerHTML='';
   if(!rows.length){ tb.innerHTML='<tr><td colspan="11" style="padding:20px;color:#888">尚無資料</td></tr>'; return; }
-  // 新順序：BC, BP, SC, SP, 大台多, 大台空, 小台多, 小台空, 微台多, 微台空
   const keys=['BC','BP','SC','SP','大台多','大台空','小台多','小台空','微台多','微台空'];
   [...rows].reverse().slice(0,30).forEach(r=>{
     const dateStr = String(r['日期']||'').replace(/\d{4}\//,'').split(' ')[0];
@@ -369,6 +306,7 @@ function mkChart(id, labels, datasets) {
 }
 function buildCharts() {
   const f=DATA.foreign.slice(-15), d=DATA.dealer.slice(-15);
+  if(!f.length) return;
   const dates=f.map(r=>String(r['日期']||'').replace(/\d{4}\//,'').split(' ')[0]);
   const ddates=d.map(r=>String(r['日期']||'').replace(/\d{4}\//,'').split(' ')[0]);
   mkChart('cBig',dates,[{data:f.map(r=>safeNum(r['大台多'])),borderColor:'#58a6ff'},{data:f.map(r=>safeNum(r['大台空'])),borderColor:'#f85149'},{data:d.map(r=>safeNum(r['大台多'])),borderColor:'#3fb950'},{data:d.map(r=>safeNum(r['大台空'])),borderColor:'#d2991d'}]);
