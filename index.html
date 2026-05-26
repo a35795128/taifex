@@ -31,6 +31,24 @@
   .section { display: none; padding: 12px; }
   .section.active { display: block; }
 
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+  .card.full { grid-column: 1 / -1; }
+  .card h3 { font-size: 10px; color: var(--text2); letter-spacing: 1px; margin-bottom: 4px; }
+  .card .big { font-size: 24px; font-weight: 700; }
+  .card .sub { font-size: 10px; color: var(--text2); margin-top: 2px; }
+  .red { color: var(--red); } .green { color: var(--green); } .blue { color: var(--blue); } .purple { color: var(--purple); }
+
+  .section-title { font-size: 11px; font-weight: 600; color: var(--text2); margin: 8px 0 6px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+
+  .chip-group { margin-bottom: 8px; }
+  .chip-group-title { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
+  .chip-group-title.foreign { background: rgba(88,166,255,0.2); color: var(--blue); }
+  .chip-group-title.dealer { background: rgba(163,113,247,0.2); color: var(--purple); }
+  .trend-row { display: flex; justify-content: space-between; padding: 4px 8px; font-size: 11px; }
+  .trend-label { color: var(--text2); }
+  .trend-val { font-weight: 600; }
+
   .notice { font-size: 10px; color: var(--text2); padding: 6px 10px; background: var(--bg2); border-radius: 8px; margin-bottom: 10px; line-height: 1.6; }
 
   .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -79,7 +97,8 @@
 </div>
 
 <div class="main-tabs">
-  <button class="tab active" onclick="switchTab('foreign')">外資</button>
+  <button class="tab active" onclick="switchTab('home')">首頁</button>
+  <button class="tab" onclick="switchTab('foreign')">外資</button>
   <button class="tab" onclick="switchTab('dealer')">自營</button>
   <button class="tab" onclick="switchTab('futchart')">期貨圖</button>
   <button class="tab" onclick="switchTab('optchart')">選擇權圖</button>
@@ -87,7 +106,28 @@
   <button class="tab" onclick="switchTab('srweek')">週選壓力</button>
 </div>
 
-<div id="foreign" class="section active">
+<!-- 首頁 -->
+<div id="home" class="section active">
+  <div class="section-title">📅 月選（波段）</div>
+  <div class="summary-grid">
+    <div class="card"><h3>🔴 最大壓力</h3><div class="big red" id="mResist">-</div><div class="sub" id="mResistOI"></div></div>
+    <div class="card"><h3>🟢 最大支撐</h3><div class="big green" id="mSupport">-</div><div class="sub" id="mSupportOI"></div></div>
+    <div class="card"><h3>⚡ Zero Gamma</h3><div class="big purple" id="mZG">-</div><div class="sub">多空分界</div></div>
+    <div class="card"><h3>📈 台指參考</h3><div class="big blue" id="mTidx">-</div><div class="sub" id="mPos"></div></div>
+  </div>
+  <div class="section-title">📅 週選（短線）</div>
+  <div class="summary-grid">
+    <div class="card"><h3>🔴 最大壓力</h3><div class="big red" id="wResist">-</div><div class="sub" id="wResistOI"></div></div>
+    <div class="card"><h3>🟢 最大支撐</h3><div class="big green" id="wSupport">-</div><div class="sub" id="wSupportOI"></div></div>
+    <div class="card"><h3>⚡ Zero Gamma</h3><div class="big purple" id="wZG">-</div><div class="sub">多空分界</div></div>
+    <div class="card"><h3>📈 台指參考</h3><div class="big blue" id="wTidx">-</div><div class="sub" id="wPos"></div></div>
+  </div>
+  <div class="card full" style="margin-top:10px"><h3>📋 法人籌碼快照（今日增減）</h3><div id="homeChips"></div></div>
+  <div class="update-time" id="updateTime">最後更新：載入中...</div>
+</div>
+
+<!-- 外資 -->
+<div id="foreign" class="section">
   <div class="notice">
     📋 外資期貨+選擇權每日增減（紅=多增 綠=空增）<br>
     <span style="font-size:9px;color:var(--text2)">🔴紅底=月結算 🟠橘底=週三結算 🔵藍底=週五結算</span><br>
@@ -102,6 +142,7 @@
   </table></div>
 </div>
 
+<!-- 自營 -->
 <div id="dealer" class="section">
   <div class="notice">
     📋 自營商期貨+選擇權每日增減（紅=多增 綠=空增）<br>
@@ -117,6 +158,7 @@
   </table></div>
 </div>
 
+<!-- 期貨圖 -->
 <div id="futchart" class="section">
   <div class="sub-tabs">
     <button class="sub-tab active" onclick="switchSub('futchart','fc-big')">大台</button>
@@ -155,6 +197,7 @@
   </div>
 </div>
 
+<!-- 選擇權圖 -->
 <div id="optchart" class="section">
   <div class="sub-tabs">
     <button class="sub-tab active" onclick="switchSub('optchart','oc-foreign')">外資</button>
@@ -182,12 +225,14 @@
   </div>
 </div>
 
+<!-- 月選 -->
 <div id="sr" class="section">
   <div class="notice">📅 月選｜紅(Call)=壓力 ← → 綠(Put)=支撐｜紫底=Zero Gamma</div>
   <div class="sr-bilateral" id="srList"></div>
   <div class="update-time" id="srTime"></div>
 </div>
 
+<!-- 週選 -->
 <div id="srweek" class="section">
   <div class="notice">📅 週選｜適合短線當沖參考</div>
   <div class="sr-bilateral" id="srWeekList"></div>
@@ -203,7 +248,6 @@ function safeNum(s) { const n = parseFloat(String(s||0).replace(/,/g,'')); retur
 function fmt(v) { return (v>=0?'+':'')+Math.round(v).toLocaleString(); }
 function cls(v) { return v>0?'pos':v<0?'neg':''; }
 
-// 台灣結算日列表
 const SETTLE_DAYS = {
   '01/07':'wed','01/14':'wed','01/21':'month','01/28':'wed',
   '02/04':'wed','02/11':'wed','02/18':'month','02/25':'wed',
@@ -238,6 +282,24 @@ async function fetchSheet(name) {
   } catch(e) { return []; }
 }
 
+function buildSummaryCard(dataRows, prefix) {
+  if(!dataRows.length) return;
+  const sorted = [...dataRows].sort((a,b)=>safeNum(b['履約價'])-safeNum(a['履約價']));
+  let topC = sorted.reduce((a,b)=>safeNum(a['Call未平倉'])>safeNum(b['Call未平倉'])?a:b);
+  let topP = sorted.reduce((a,b)=>safeNum(a['Put未平倉'])>safeNum(b['Put未平倉'])?a:b);
+  let zg = sorted.find(r=>String(r['Zero Gamma']||'').includes('分界'));
+  document.getElementById(prefix+'Resist').textContent = safeNum(topC['履約價']).toLocaleString();
+  document.getElementById(prefix+'ResistOI').textContent = `Call ${Math.round(safeNum(topC['Call未平倉'])/1000)}K 口`;
+  document.getElementById(prefix+'Support').textContent = safeNum(topP['履約價']).toLocaleString();
+  document.getElementById(prefix+'SupportOI').textContent = `Put ${Math.round(safeNum(topP['Put未平倉'])/1000)}K 口`;
+  const zgStrike = zg ? safeNum(zg['履約價']) : null;
+  document.getElementById(prefix+'ZG').textContent = zgStrike ? zgStrike.toLocaleString() : '-';
+  const strikes = sorted.map(r=>safeNum(r['履約價']));
+  const mid = Math.round((Math.max(...strikes) + Math.min(...strikes)) / 2);
+  document.getElementById(prefix+'Tidx').textContent = '~' + mid.toLocaleString();
+  document.getElementById(prefix+'Pos').textContent = zgStrike ? (mid > zgStrike ? '🟢 偏多區' : '🔴 偏空區') : '';
+}
+
 async function loadData() {
   document.getElementById('statusText').textContent = '更新中...';
   try {
@@ -249,6 +311,9 @@ async function loadData() {
     DATA.sr      = srRows.filter(r=>String(r['履約價']||'').match(/^\d{4,6}$/));
     DATA.srWeek  = srWeekRows.filter(r=>String(r['履約價']||'').match(/^\d{4,6}$/));
 
+    buildSummaryCard(DATA.sr, 'm');
+    buildSummaryCard(DATA.srWeek, 'w');
+    buildChips();
     buildTable('foreignTbody', DATA.foreign);
     buildTable('dealerTbody', DATA.dealer);
     buildBilateral('srList', DATA.sr);
@@ -256,7 +321,7 @@ async function loadData() {
     buildCharts();
 
     const now = new Date().toLocaleString('zh-TW', {hour12: false});
-    ['srTime','srWeekTime'].forEach(id=>{
+    ['updateTime','srTime','srWeekTime'].forEach(id=>{
       const el=document.getElementById(id); if(el) el.textContent=`最後更新：${now}`;
     });
     document.getElementById('statusText').textContent = '✅ 每日 15:10 自動更新';
@@ -264,6 +329,17 @@ async function loadData() {
     document.getElementById('statusText').textContent = '❌ 更新失敗';
     console.error(e);
   }
+}
+
+function buildChips() {
+  const f = DATA.foreign[0] || {}; const d = DATA.dealer[0] || {};
+  const keys = ['BC','BP','SC','SP','大台多','大台空','小台多','小台空'];
+  let html = '<div class="chip-group"><span class="chip-group-title foreign">外資</span>';
+  keys.forEach(k=>{ const v=safeNum(f[k]); html+=`<div class="trend-row"><span class="trend-label">${k}</span><span class="trend-val ${cls(v)}">${fmt(v)}</span></div>`; });
+  html += '</div><div class="chip-group"><span class="chip-group-title dealer">自營</span>';
+  keys.forEach(k=>{ const v=safeNum(d[k]); html+=`<div class="trend-row"><span class="trend-label">${k}</span><span class="trend-val ${cls(v)}">${fmt(v)}</span></div>`; });
+  html += '</div>';
+  document.getElementById('homeChips').innerHTML = html||'尚無資料';
 }
 
 function buildTable(tbodyId, rows) {
@@ -317,7 +393,7 @@ function buildCharts() {
 }
 
 function switchTab(id) {
-  const ids=['foreign','dealer','futchart','optchart','sr','srweek'];
+  const ids=['home','foreign','dealer','futchart','optchart','sr','srweek'];
   document.querySelectorAll('.main-tabs .tab').forEach((t,i)=>t.classList.toggle('active',ids[i]===id));
   document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id));
   if(id==='futchart'||id==='optchart') setTimeout(buildCharts,80);
