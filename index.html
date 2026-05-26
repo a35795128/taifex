@@ -342,7 +342,7 @@ function buildChips() {
 function buildTable(tbodyId, rows) {
   const tb=document.getElementById(tbodyId); tb.innerHTML='';
   if(!rows.length){ tb.innerHTML='<tr><td colspan="11" style="padding:20px;color:#888">尚無資料</td></tr>'; return; }
-  const keys=['BC','BP','SC','SP','大台多','大台空','小台多','小台空','微台多','微台空'];
+  const keys=['大台多','大台空','小台多','小台空','微台多','微台空','BC','BP','SC','SP'];
   [...rows].reverse().slice(0,30).forEach(r=>{
     const dateStr = String(r['日期']||'').replace(/\d{4}\//,'').split(' ')[0];
     const sc = getSettleClass(dateStr);
