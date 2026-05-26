@@ -335,9 +335,11 @@ def calc_gex(sr_list):
             "nature":   nature,
         })
 
+    total_gex = sum(abs(r["gex"]) for r in result)
+    threshold = total_gex * 0.05
     min_abs = min(abs(r["gex"]) for r in result)
     for r in result:
-        r["is_zero_gamma"] = (abs(r["gex"]) == min_abs)
+        r["is_zero_gamma"] = (abs(r["gex"]) == min_abs and min_abs <= threshold)
 
     for r in result:
         r["is_big_money"] = r["weight"] >= 5.0
