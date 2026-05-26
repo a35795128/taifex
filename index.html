@@ -5,25 +5,35 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="台指籌碼">
-<title>台指期籌碼儀表板</title>
+<meta name="apple-mobile-web-app-title" content="儀表板">
+<title>儀表板</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
   :root {
     --bg: #0d1117; --bg2: #161b22; --bg3: #21262d;
     --text: #f0f0f0; --text2: #8b949e; --border: #30363d;
     --red: #f85149; --green: #3fb950; --blue: #58a6ff; --purple: #a371f7; --amber: #d2991d;
+    --orange: #f0883e; --teal: #3fb950;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; padding-bottom: 20px; }
-  .header { padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
-  .header h1 { font-size: 17px; font-weight: 600; }
-  .header-sub { font-size: 10px; color: var(--text2); }
-  .refresh-btn { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 7px 12px; cursor: pointer; color: var(--text); font-size: 12px; }
 
-  .tabs { display: flex; gap: 3px; padding: 10px 12px; overflow-x: auto; border-bottom: 1px solid var(--border); }
-  .tab { flex-shrink: 0; padding: 6px 12px; font-size: 11px; border: 1px solid var(--border); border-radius: 18px; cursor: pointer; background: transparent; color: var(--text2); }
-  .tab.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+  /* 標題列：標題在左，頁籤在右 */
+  .header { padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 6px; }
+  .header-left { display: flex; align-items: center; gap: 8px; }
+  .header h1 { font-size: 16px; font-weight: 600; white-space: nowrap; }
+  .header-sub { font-size: 9px; color: var(--text2); white-space: nowrap; }
+  .refresh-btn { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 5px 10px; cursor: pointer; color: var(--text); font-size: 11px; white-space: nowrap; }
+
+  /* 頁籤在標題列右邊，用更小的圓角 */
+  .header-tabs { display: flex; gap: 2px; flex-wrap: wrap; }
+  .header-tabs .tab { flex-shrink: 0; padding: 4px 8px; font-size: 10px; border: 1px solid var(--border); border-radius: 14px; cursor: pointer; background: transparent; color: var(--text2); white-space: nowrap; }
+  .header-tabs .tab.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+  /* 下方六個主要頁籤列 */
+  .main-tabs { display: flex; gap: 3px; padding: 8px 12px; overflow-x: auto; border-bottom: 1px solid var(--border); }
+  .main-tabs .tab { flex-shrink: 0; padding: 5px 10px; font-size: 11px; border: 1px solid var(--border); border-radius: 16px; cursor: pointer; background: transparent; color: var(--text2); white-space: nowrap; }
+  .main-tabs .tab.active { background: var(--blue); color: #fff; border-color: var(--blue); }
 
   .section { display: none; padding: 12px; }
   .section.active { display: block; }
@@ -38,20 +48,35 @@
 
   .section-title { font-size: 11px; font-weight: 600; color: var(--text2); margin: 8px 0 6px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
 
-  .trend-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 11px; }
+  /* 籌碼快照：外資用藍色標籤，自營用紫色標籤 */
+  .chip-group { margin-bottom: 8px; }
+  .chip-group-title { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
+  .chip-group-title.foreign { background: rgba(88,166,255,0.2); color: var(--blue); }
+  .chip-group-title.dealer { background: rgba(163,113,247,0.2); color: var(--purple); }
+  .trend-row { display: flex; justify-content: space-between; padding: 4px 8px; font-size: 11px; }
   .trend-label { color: var(--text2); }
   .trend-val { font-weight: 600; }
 
-  .notice { font-size: 10px; color: var(--text2); padding: 6px 10px; background: var(--bg2); border-radius: 8px; margin-bottom: 10px; }
+  .notice { font-size: 10px; color: var(--text2); padding: 6px 10px; background: var(--bg2); border-radius: 8px; margin-bottom: 10px; line-height: 1.6; }
 
-  table { width: 100%; font-size: 10px; border-collapse: collapse; }
-  th { padding: 4px 3px; color: var(--text2); font-weight: 400; border-bottom: 1px solid var(--border); text-align: center; font-size: 9px; }
-  td { padding: 4px 3px; border-bottom: 1px solid var(--border); text-align: center; }
+  /* 表格 */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { width: 100%; font-size: 10px; border-collapse: collapse; min-width: 600px; }
+  th { padding: 5px 3px; color: var(--text2); font-weight: 400; border-bottom: 1px solid var(--border); text-align: center; font-size: 9px; white-space: nowrap; background: var(--bg2); }
+  td { padding: 4px 3px; border-bottom: 1px solid var(--border); text-align: center; white-space: nowrap; }
   .pos { color: var(--red); } .neg { color: var(--green); }
 
+  /* 結算日背景色 */
+  tr.settle-wed { background: rgba(240,136,62,0.12); }
+  tr.settle-fri { background: rgba(88,166,255,0.12); }
+  tr.settle-month { background: rgba(248,81,73,0.12); }
+
   .chart-wrap { margin-bottom: 14px; }
-  .chart-title { font-size: 11px; font-weight: 500; margin-bottom: 4px; }
-  .sub-tabs { display: flex; gap: 4px; margin-bottom: 8px; }
+  .chart-title { font-size: 11px; font-weight: 500; margin-bottom: 2px; }
+  .chart-legend { display: flex; flex-wrap: wrap; gap: 6px; font-size: 9px; color: var(--text2); margin-bottom: 4px; }
+  .chart-legend span { display: flex; align-items: center; gap: 3px; }
+  .ld { width: 10px; height: 2px; border-radius: 1px; display: inline-block; }
+  .sub-tabs { display: flex; gap: 4px; margin-bottom: 6px; }
   .sub-tab { padding: 4px 8px; font-size: 10px; border: 1px solid var(--border); border-radius: 12px; cursor: pointer; background: transparent; color: var(--text2); }
   .sub-tab.active { background: var(--bg3); color: var(--text); }
   .sub-section { display: none; }
@@ -68,23 +93,23 @@
   .bdg { font-size: 7px; padding: 1px 4px; border-radius: 4px; margin-left: 2px; }
   .bdg-zg { background: rgba(163,113,247,0.2); color: var(--purple); }
   .bdg-big { background: rgba(210,153,29,0.2); color: var(--amber); }
-
   .update-time { text-align: center; font-size: 10px; color: var(--text2); padding: 10px; border-top: 1px solid var(--border); margin-top: 12px; }
 </style>
 </head>
 <body>
 
+<!-- 標題列：標題在左，頁籤在右 -->
 <div class="header">
-  <div>
-    <h1>📊 台指籌碼儀表板</h1>
-    <div class="header-sub" id="statusText">載入中...</div>
+  <div class="header-left">
+    <h1>📊 儀表板</h1>
+    <span class="header-sub" id="statusText">載入中...</span>
   </div>
   <button class="refresh-btn" onclick="loadData()">🔄 更新</button>
 </div>
 
-<div class="tabs">
-  <button class="tab active" onclick="switchTab('home')">首頁</button>
-  <button class="tab" onclick="switchTab('foreign')">外資</button>
+<!-- 下方六個主要頁籤：外資 自營 期貨圖 選擇權圖 月選壓力 週選壓力 -->
+<div class="main-tabs">
+  <button class="tab active" onclick="switchTab('foreign')">外資</button>
   <button class="tab" onclick="switchTab('dealer')">自營</button>
   <button class="tab" onclick="switchTab('futchart')">期貨圖</button>
   <button class="tab" onclick="switchTab('optchart')">選擇權圖</button>
@@ -92,66 +117,110 @@
   <button class="tab" onclick="switchTab('srweek')">週選壓力</button>
 </div>
 
-<div id="home" class="section active">
-  <!-- 月選摘要 -->
-  <div class="section-title">📅 月選（波段）</div>
-  <div class="summary-grid">
-    <div class="card"><h3>🔴 最大壓力</h3><div class="big red" id="mResist">-</div><div class="sub" id="mResistOI"></div></div>
-    <div class="card"><h3>🟢 最大支撐</h3><div class="big green" id="mSupport">-</div><div class="sub" id="mSupportOI"></div></div>
-    <div class="card"><h3>⚡ Zero Gamma</h3><div class="big purple" id="mZG">-</div><div class="sub">多空分界</div></div>
-    <div class="card"><h3>📈 台指參考</h3><div class="big blue" id="mTidx">-</div><div class="sub" id="mPos"></div></div>
+<!-- 內容區 -->
+<div id="foreign" class="section active">
+  <div class="notice">
+    📋 外資期貨+選擇權每日增減（紅=多增 綠=空增）<br>
+    <span style="font-size:9px;color:var(--text2)">BC=看漲 BP=看跌 SC=看不漲 SP=看不跌</span>
   </div>
-  <!-- 週選摘要 -->
-  <div class="section-title">📅 週選（短線）</div>
-  <div class="summary-grid">
-    <div class="card"><h3>🔴 最大壓力</h3><div class="big red" id="wResist">-</div><div class="sub" id="wResistOI"></div></div>
-    <div class="card"><h3>🟢 最大支撐</h3><div class="big green" id="wSupport">-</div><div class="sub" id="wSupportOI"></div></div>
-    <div class="card"><h3>⚡ Zero Gamma</h3><div class="big purple" id="wZG">-</div><div class="sub">多空分界</div></div>
-    <div class="card"><h3>📈 台指參考</h3><div class="big blue" id="wTidx">-</div><div class="sub" id="wPos"></div></div>
-  </div>
-  <!-- 法人籌碼 -->
-  <div class="card full" style="margin-top:10px"><h3>📋 法人籌碼快照（今日增減）</h3><div id="homeChips"></div></div>
-  <!-- 最後更新時間 -->
-  <div class="update-time" id="updateTime">最後更新：載入中...</div>
-</div>
-
-<div id="foreign" class="section">
-  <div class="notice">外資期貨+選擇權每日增減（紅=多增 綠=空增）</div>
-  <div style="overflow-x:auto"><table>
-    <thead><tr><th>日期</th><th>大台多</th><th>大台空</th><th>小台多</th><th>小台空</th><th>微台多</th><th>微台空</th><th>SC</th><th>BC</th><th>SP</th><th>BP</th></tr></thead>
+  <div class="table-wrap"><table>
+    <thead><tr>
+      <th>日期</th><th>BC</th><th>BP</th><th>SC</th><th>SP</th>
+      <th>大台多</th><th>大台空</th><th>小台多</th><th>小台空</th><th>微台多</th><th>微台空</th>
+    </tr></thead>
     <tbody id="foreignTbody"></tbody>
   </table></div>
 </div>
+
 <div id="dealer" class="section">
-  <div class="notice">自營商期貨+選擇權每日增減</div>
-  <div style="overflow-x:auto"><table>
-    <thead><tr><th>日期</th><th>大台多</th><th>大台空</th><th>小台多</th><th>小台空</th><th>微台多</th><th>微台空</th><th>SC</th><th>BC</th><th>SP</th><th>BP</th></tr></thead>
+  <div class="notice">
+    📋 自營商期貨+選擇權每日增減（紅=多增 綠=空增）<br>
+    <span style="font-size:9px;color:var(--text2)">BC=看漲 BP=看跌 SC=看不漲 SP=看不跌</span>
+  </div>
+  <div class="table-wrap"><table>
+    <thead><tr>
+      <th>日期</th><th>BC</th><th>BP</th><th>SC</th><th>SP</th>
+      <th>大台多</th><th>大台空</th><th>小台多</th><th>小台空</th><th>微台多</th><th>微台空</th>
+    </tr></thead>
     <tbody id="dealerTbody"></tbody>
   </table></div>
 </div>
+
+<!-- 期貨圖 -->
 <div id="futchart" class="section">
   <div class="sub-tabs">
     <button class="sub-tab active" onclick="switchSub('futchart','fc-big')">大台</button>
     <button class="sub-tab" onclick="switchSub('futchart','fc-small')">小台</button>
     <button class="sub-tab" onclick="switchSub('futchart','fc-micro')">微台</button>
   </div>
-  <div id="fc-big" class="sub-section active"><div class="chart-title">大台多空增減</div><div style="height:200px"><canvas id="cBig"></canvas></div></div>
-  <div id="fc-small" class="sub-section"><div class="chart-title">小台多空增減</div><div style="height:200px"><canvas id="cSmall"></canvas></div></div>
-  <div id="fc-micro" class="sub-section"><div class="chart-title">微台多空增減</div><div style="height:200px"><canvas id="cMicro"></canvas></div></div>
+  <div id="fc-big" class="sub-section active">
+    <div class="chart-title">大台多空增減</div>
+    <div class="chart-legend">
+      <span><span class="ld" style="background:#58a6ff"></span>外資多</span>
+      <span><span class="ld" style="background:#f85149"></span>外資空</span>
+      <span><span class="ld" style="background:#3fb950"></span>自營多</span>
+      <span><span class="ld" style="background:#d2991d"></span>自營空</span>
+    </div>
+    <div style="height:200px"><canvas id="cBig"></canvas></div>
+  </div>
+  <div id="fc-small" class="sub-section">
+    <div class="chart-title">小台多空增減</div>
+    <div class="chart-legend">
+      <span><span class="ld" style="background:#58a6ff"></span>外資多</span>
+      <span><span class="ld" style="background:#f85149"></span>外資空</span>
+      <span><span class="ld" style="background:#3fb950"></span>自營多</span>
+      <span><span class="ld" style="background:#d2991d"></span>自營空</span>
+    </div>
+    <div style="height:200px"><canvas id="cSmall"></canvas></div>
+  </div>
+  <div id="fc-micro" class="sub-section">
+    <div class="chart-title">微台多空增減</div>
+    <div class="chart-legend">
+      <span><span class="ld" style="background:#58a6ff"></span>外資多</span>
+      <span><span class="ld" style="background:#f85149"></span>外資空</span>
+      <span><span class="ld" style="background:#3fb950"></span>自營多</span>
+      <span><span class="ld" style="background:#d2991d"></span>自營空</span>
+    </div>
+    <div style="height:200px"><canvas id="cMicro"></canvas></div>
+  </div>
 </div>
+
+<!-- 選擇權圖 -->
 <div id="optchart" class="section">
   <div class="sub-tabs">
     <button class="sub-tab active" onclick="switchSub('optchart','oc-foreign')">外資</button>
     <button class="sub-tab" onclick="switchSub('optchart','oc-dealer')">自營</button>
   </div>
-  <div id="oc-foreign" class="sub-section active"><div class="chart-title">外資選擇權</div><div style="height:200px"><canvas id="cOptF"></canvas></div></div>
-  <div id="oc-dealer" class="sub-section"><div class="chart-title">自營選擇權</div><div style="height:200px"><canvas id="cOptD"></canvas></div></div>
+  <div id="oc-foreign" class="sub-section active">
+    <div class="chart-title">外資選擇權</div>
+    <div class="chart-legend">
+      <span><span class="ld" style="background:#3fb950"></span>BC 看漲</span>
+      <span><span class="ld" style="background:#f85149"></span>SC 看不漲</span>
+      <span><span class="ld" style="background:#58a6ff"></span>SP 看不跌</span>
+      <span><span class="ld" style="background:#d2991d"></span>BP 看跌</span>
+    </div>
+    <div style="height:200px"><canvas id="cOptF"></canvas></div>
+  </div>
+  <div id="oc-dealer" class="sub-section">
+    <div class="chart-title">自營選擇權</div>
+    <div class="chart-legend">
+      <span><span class="ld" style="background:#3fb950"></span>BC 看漲</span>
+      <span><span class="ld" style="background:#f85149"></span>SC 看不漲</span>
+      <span><span class="ld" style="background:#58a6ff"></span>SP 看不跌</span>
+      <span><span class="ld" style="background:#d2991d"></span>BP 看跌</span>
+    </div>
+    <div style="height:200px"><canvas id="cOptD"></canvas></div>
+  </div>
 </div>
+
+<!-- 月選 -->
 <div id="sr" class="section">
   <div class="notice">📅 月選｜紅(Call)=壓力 ← → 綠(Put)=支撐｜紫底=Zero Gamma</div>
   <div class="sr-bilateral" id="srList"></div>
   <div class="update-time" id="srTime"></div>
 </div>
+
+<!-- 週選 -->
 <div id="srweek" class="section">
   <div class="notice">📅 週選｜適合短線當沖參考</div>
   <div class="sr-bilateral" id="srWeekList"></div>
@@ -166,6 +235,33 @@ const charts = {};
 function safeNum(s) { const n = parseFloat(String(s||0).replace(/,/g,'')); return isNaN(n)?0:n; }
 function fmt(v) { return (v>=0?'+':'')+Math.round(v).toLocaleString(); }
 function cls(v) { return v>0?'pos':v<0?'neg':''; }
+
+// 台灣結算日列表（2026年，可自行擴充）
+const SETTLE_DAYS = {
+  '01/07':'wed','01/14':'wed','01/21':'month','01/28':'wed',
+  '02/04':'wed','02/11':'wed','02/18':'month','02/25':'wed',
+  '03/04':'wed','03/11':'wed','03/18':'month','03/25':'wed',
+  '04/01':'wed','04/08':'wed','04/15':'month','04/22':'wed','04/29':'wed',
+  '05/06':'wed','05/13':'wed','05/20':'month','05/27':'wed',
+  '06/03':'wed','06/10':'wed','06/17':'month','06/24':'wed',
+  '07/01':'wed','07/08':'wed','07/15':'month','07/22':'wed','07/29':'wed',
+  '08/05':'wed','08/12':'wed','08/19':'month','08/26':'wed',
+  '09/02':'wed','09/09':'wed','09/16':'month','09/23':'wed','09/30':'wed',
+  '10/07':'wed','10/14':'wed','10/21':'month','10/28':'wed',
+  '11/04':'wed','11/11':'wed','11/18':'month','11/25':'wed',
+  '12/02':'wed','12/09':'wed','12/16':'month','12/23':'wed','12/30':'wed'
+};
+
+function getSettleClass(dateStr) {
+  // dateStr 格式: "05/25" 或 "2026/05/25"
+  const parts = dateStr.split('/');
+  const mmdd = parts.slice(-2).join('/');
+  const t = SETTLE_DAYS[mmdd];
+  if (t === 'month') return 'settle-month';
+  if (t === 'wed') return 'settle-wed';
+  // 週五結算：檢查是否為週五（簡單判斷，可在需要時擴充）
+  return '';
+}
 
 async function fetchSheet(name) {
   try {
@@ -215,29 +311,34 @@ async function loadData() {
   buildCharts();
 
   const now = new Date().toLocaleString('zh-TW', {hour12: false});
-  document.getElementById('updateTime').textContent = `最後更新：${now}`;
-  document.getElementById('srTime').textContent = `最後更新：${now}`;
-  document.getElementById('srWeekTime').textContent = `最後更新：${now}`;
+  ['updateTime','srTime','srWeekTime'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.textContent=`最後更新：${now}`;
+  });
   document.getElementById('statusText').textContent = '✅ 每日 15:10 自動更新';
 }
 
 function buildChips() {
   const f = DATA.foreign[0] || {}; const d = DATA.dealer[0] || {};
-  const keys = ['大台多','大台空','小台多','小台空','SC','BC','SP','BP'];
-  let html = '<div class="trend-row"><span class="trend-label">外資</span></div>';
-  keys.forEach(k=>{ const v=safeNum(f[k]); if(v!==0) html+=`<div class="trend-row"><span class="trend-label">${k}</span><span class="trend-val ${cls(v)}">${fmt(v)}</span></div>`; });
-  html+='<div class="trend-row" style="margin-top:4px"><span class="trend-label">自營</span></div>';
-  keys.forEach(k=>{ const v=safeNum(d[k]); if(v!==0) html+=`<div class="trend-row"><span class="trend-label">${k}</span><span class="trend-val ${cls(v)}">${fmt(v)}</span></div>`; });
+  const keys = ['BC','BP','SC','SP','大台多','大台空','小台多','小台空'];
+  let html = '<div class="chip-group"><span class="chip-group-title foreign">外資</span>';
+  keys.forEach(k=>{ const v=safeNum(f[k]); html+=`<div class="trend-row"><span class="trend-label">${k}</span><span class="trend-val ${cls(v)}">${fmt(v)}</span></div>`; });
+  html += '</div><div class="chip-group"><span class="chip-group-title dealer">自營</span>';
+  keys.forEach(k=>{ const v=safeNum(d[k]); html+=`<div class="trend-row"><span class="trend-label">${k}</span><span class="trend-val ${cls(v)}">${fmt(v)}</span></div>`; });
+  html += '</div>';
   document.getElementById('homeChips').innerHTML = html||'尚無資料';
 }
 
 function buildTable(tbodyId, rows) {
   const tb=document.getElementById(tbodyId); tb.innerHTML='';
   if(!rows.length){ tb.innerHTML='<tr><td colspan="11" style="padding:20px;color:#888">尚無資料</td></tr>'; return; }
-  const keys=['大台多','大台空','小台多','小台空','微台多','微台空','SC','BC','SP','BP'];
+  // 新順序：BC, BP, SC, SP, 大台多, 大台空, 小台多, 小台空, 微台多, 微台空
+  const keys=['BC','BP','SC','SP','大台多','大台空','小台多','小台空','微台多','微台空'];
   [...rows].reverse().slice(0,30).forEach(r=>{
+    const dateStr = String(r['日期']||'').replace(/\d{4}\//,'').split(' ')[0];
+    const sc = getSettleClass(dateStr);
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${String(r['日期']||'').split(' ')[0].replace(/\d{4}\//,'')}</td>`+keys.map(k=>{const v=safeNum(r[k]);return`<td class="${cls(v)}">${fmt(v)}</td>`;}).join('');
+    if(sc) tr.className = sc;
+    tr.innerHTML=`<td>${dateStr}</td>`+keys.map(k=>{const v=safeNum(r[k]);return`<td class="${cls(v)}">${fmt(v)}</td>`;}).join('');
     tb.appendChild(tr);
   });
 }
@@ -278,8 +379,8 @@ function buildCharts() {
 }
 
 function switchTab(id) {
-  const ids=['home','foreign','dealer','futchart','optchart','sr','srweek'];
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',ids[i]===id));
+  const ids=['foreign','dealer','futchart','optchart','sr','srweek'];
+  document.querySelectorAll('.main-tabs .tab').forEach((t,i)=>t.classList.toggle('active',ids[i]===id));
   document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id));
   if(id==='futchart'||id==='optchart') setTimeout(buildCharts,80);
 }
