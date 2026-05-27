@@ -628,3 +628,22 @@ if __name__ == "__main__":
     main()
     print("\n視窗將在 10 秒後自動關閉...")
     time.sleep(10)
+
+import requests
+
+# TradingView Webhook
+def send_to_tradingview(tv_string):
+    webhook_url = "https://hooks.tradingview.com/你的Webhook網址"
+    
+    message = {
+        "text": tv_string
+    }
+    
+    try:
+        r = requests.post(webhook_url, json=message)
+        print(f"  ✅ 已發送 TradingView Webhook")
+    except Exception as e:
+        print(f"  ❌ Webhook 發送失敗：{e}")
+
+# 在 main() 最後面加上
+send_to_tradingview(tv_string)
