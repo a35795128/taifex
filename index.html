@@ -88,6 +88,14 @@
   .bdg-maxc { background: rgba(248,81,73,0.2); color: var(--red); }
   .bdg-maxp { background: rgba(63,185,80,0.2); color: var(--green); }
   .update-time { text-align: center; font-size: 10px; color: var(--text2); padding: 10px; border-top: 1px solid var(--border); margin-top: 12px; }
+
+  /* 複製按鈕 */
+  .copy-section { margin-top: 10px; }
+  .copy-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .copy-label { font-size: 10px; color: var(--text2); min-width: 40px; }
+  .copy-input { flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; color: var(--text); font-size: 9px; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .copy-btn { background: var(--blue); border: none; border-radius: 6px; padding: 6px 10px; color: #fff; font-size: 10px; cursor: pointer; white-space: nowrap; }
+  .copy-btn:active { background: #1d4ed8; }
 </style>
 </head>
 <body>
@@ -126,6 +134,22 @@
     <div class="card"><h3>📈 台指參考</h3><div class="big blue" id="wTidx">-</div><div class="sub" id="wPos"></div></div>
   </div>
   <div class="card full" style="margin-top:10px"><h3>📋 法人籌碼快照（今日增減）</h3><div id="homeChips"></div></div>
+  
+  <!-- TradingView 字串複製區 -->
+  <div class="card full copy-section">
+    <h3>📋 一鍵複製 TradingView 字串</h3>
+    <div class="copy-row">
+      <span class="copy-label">月選</span>
+      <input class="copy-input" id="tvMonthInput" readonly placeholder="載入中...">
+      <button class="copy-btn" onclick="copyTV('tvMonthInput')">📋 複製</button>
+    </div>
+    <div class="copy-row">
+      <span class="copy-label">週選</span>
+      <input class="copy-input" id="tvWeekInput" readonly placeholder="載入中...">
+      <button class="copy-btn" onclick="copyTV('tvWeekInput')">📋 複製</button>
+    </div>
+  </div>
+  
   <div class="update-time" id="updateTime">最後更新：載入中...</div>
 </div>
 
@@ -137,8 +161,8 @@
   </div>
   <div class="table-wrap"><table>
     <thead><tr>
-      <th>日期</th><th>大台多</th><th>大台空</th><th>小台多</th>
-      <th>小台空</th><th>微台多</th><th>微台空</th><th>BC</th><th>BP</th><th>SC</th><th>SP</th>
+      <th>日期</th><th>BC</th><th>BP</th><th>SC</th><th>SP</th>
+      <th>大台多</th><th>大台空</th><th>小台多</th><th>小台空</th><th>微台多</th><th>微台空</th>
     </tr></thead>
     <tbody id="foreignTbody"></tbody>
   </table></div>
@@ -152,8 +176,8 @@
   </div>
   <div class="table-wrap"><table>
     <thead><tr>
-      <th>日期</th><th>大台多</th><th>大台空</th><th>小台多</th>
-      <th>小台空</th><th>微台多</th><th>微台空</th><th>BC</th><th>BP</th><th>SC</th><th>SP</th>
+      <th>日期</th><th>BC</th><th>BP</th><th>SC</th><th>SP</th>
+      <th>大台多</th><th>大台空</th><th>小台多</th><th>小台空</th><th>微台多</th><th>微台空</th>
     </tr></thead>
     <tbody id="dealerTbody"></tbody>
   </table></div>
@@ -279,6 +303,33 @@ async function fetchSheet(name) {
   } catch(e) { return []; }
 }
 
+// 讀取 TradingView 字串（試算表 A2 格）
+async function loadTVStrings() {
+  try {
+    const [monthRes, weekRes] = await Promise.all([
+      fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=支撐壓力&range=A2`),
+      fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=支撐壓力_週選&range=A2`)
+    ]);
+    document.getElementById('tvMonthInput').value = (await monthRes.text()).replace(/"/g,'').trim();
+    document.getElementById('tvWeekInput').value = (await weekRes.text()).replace(/"/g,'').trim();
+  } catch(e) {
+    document.getElementById('tvMonthInput').value = '讀取失敗';
+    document.getElementById('tvWeekInput').value = '讀取失敗';
+  }
+}
+
+// 一鍵複製
+function copyTV(inputId) {
+  const input = document.getElementById(inputId);
+  input.select();
+  document.execCommand('copy');
+  // 短暫回饋
+  const btn = input.parentElement.querySelector('.copy-btn');
+  const originalText = btn.textContent;
+  btn.textContent = '✅ 已複製';
+  setTimeout(() => { btn.textContent = originalText; }, 1500);
+}
+
 function buildSummaryCard(dataRows, prefix) {
   if(!dataRows.length) return;
   const sorted = [...dataRows].sort((a,b)=>safeNum(b['履約價'])-safeNum(a['履約價']));
@@ -316,6 +367,7 @@ async function loadData() {
     buildBilateral('srList', DATA.sr);
     buildBilateral('srWeekList', DATA.srWeek);
     buildCharts();
+    loadTVStrings();
 
     const now = new Date().toLocaleString('zh-TW', {hour12: false});
     ['updateTime','srTime','srWeekTime'].forEach(id=>{
@@ -358,7 +410,6 @@ function buildBilateral(divId, dataRows) {
   if(!dataRows.length){ div.innerHTML='<div style="padding:20px;color:#888;text-align:center">尚無資料</div>'; return; }
   const sorted=[...dataRows].sort((a,b)=>safeNum(b['履約價'])-safeNum(a['履約價']));
   const maxV=Math.max(...sorted.map(r=>safeNum(r['Call未平倉'])+safeNum(r['Put未平倉'])),1);
-  // 找最大壓力（Call OI 最大）和最大支撐（Put OI 最大）
   const maxCallOI = Math.max(...sorted.map(r=>safeNum(r['Call未平倉'])));
   const maxPutOI = Math.max(...sorted.map(r=>safeNum(r['Put未平倉'])));
   let html='';
@@ -368,12 +419,10 @@ function buildBilateral(divId, dataRows) {
     const isBig=String(r['大資金']||'').includes('大資金');
     const isMaxC = (c === maxCallOI && c > 0);
     const isMaxP = (p === maxPutOI && p > 0);
-    // 決定背景色 class（ZG 優先，再來是最強壓/撐）
     let bgClass = '';
     if (isZG) bgClass = 'zg';
     else if (isMaxC) bgClass = 'max-c';
     else if (isMaxP) bgClass = 'max-p';
-    // 標籤
     let badges = '';
     if (isZG) badges += '<span class="bdg bdg-zg">ZG</span> ';
     if (isBig) badges += '<span class="bdg bdg-big">大</span> ';
